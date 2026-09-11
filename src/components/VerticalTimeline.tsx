@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CommitmentLane } from '@/components/CommitmentLane';
 import { timelineTheme } from '@/constants/theme';
@@ -12,7 +12,7 @@ import {
 } from '@/domain/workload';
 import type { Commitment, TimeRange } from '@/types/commitment';
 
-const timelineHeight = 560;
+const fallbackTimelineHeight = 420;
 const infoPanelWidth = 212;
 const infoPanelHeight = 116;
 
@@ -57,14 +57,15 @@ function clamp(value: number, min: number, max: number) {
 
 export function VerticalTimeline({ commitments, now, range, windowStart, windowEnd }: Props) {
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [laneFieldWidth, setLaneFieldWidth] = useState(0);
+  const [laneFieldSize, setLaneFieldSize] = useState({ height: fallbackTimelineHeight, width: 0 });
   const ticks = getVisibleDateTicks(range, windowStart);
   const overloadPeriods = identifyOverloadPeriods(commitments, windowStart, windowEnd);
   const activeCount = commitments.filter((commitment) => getCommitmentStatus(commitment, now) === 'active').length;
   const score = calculateWorkloadScore(commitments, now);
-  const laneWidth = laneFieldWidth > 0 ? laneFieldWidth / commitments.length : 0;
+  const timelineHeight = Math.max(1, laneFieldSize.height);
+  const laneWidth = laneFieldSize.width > 0 ? laneFieldSize.width / commitments.length : 0;
   const panelLeft = selection
-    ? clamp(selection.laneIndex * laneWidth + laneWidth * 0.58, 8, Math.max(8, laneFieldWidth - infoPanelWidth - 8))
+    ? clamp(selection.laneIndex * laneWidth + laneWidth * 0.58, 8, Math.max(8, laneFieldSize.width - infoPanelWidth - 8))
     : 0;
   const panelTop = selection ? clamp(selection.anchorY - 20, 8, timelineHeight - infoPanelHeight - 8) : 0;
 
@@ -91,8 +92,13 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
         </View>
 
         <View
-          onLayout={(event) => setLaneFieldWidth(event.nativeEvent.layout.width)}
+          onLayout={(event) => {
+            const { height, width } = event.nativeEvent.layout;
+            setLaneFieldSize({ height, width });
+          }}
           style={styles.laneField}>
+          <Pressable accessibilityLabel="Dismiss commitment details" onPress={() => setSelection(null)} style={styles.dismissLayer} />
+
           {overloadPeriods.map((period) => {
             const startY = (1 - getTimePosition(period.start, windowStart, windowEnd)) * 100;
             const endY = (1 - getTimePosition(period.end, windowStart, windowEnd)) * 100;
@@ -128,12 +134,12 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
           ))}
 
           {selection && (
-            <View style={[styles.infoPanel, { left: panelLeft, top: panelTop }]}>
+            <Pressable style={[styles.infoPanel, { left: panelLeft, top: panelTop }]}>
               <Text style={styles.infoTitle}>{selection.commitment.title}</Text>
               <Text style={styles.infoText}>Starts {formatDateTime(selection.commitment.startAt)}</Text>
               <Text style={styles.infoText}>Due {formatDateTime(selection.commitment.dueAt)}</Text>
               <Text style={styles.infoText}>Difficulty {selection.commitment.difficulty}</Text>
-            </View>
+            </Pressable>
           )}
         </View>
       </View>
@@ -144,7 +150,7 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
 const styles = StyleSheet.create({
   outer: {
     flex: 1,
-    minHeight: 620,
+    minHeight: 0,
   },
   scoreRow: {
     alignItems: 'center',
@@ -169,10 +175,10 @@ const styles = StyleSheet.create({
   timeline: {
     flex: 1,
     flexDirection: 'row',
-    minHeight: timelineHeight,
+    minHeight: 0,
   },
   railColumn: {
-    height: timelineHeight,
+    flex: 0,
     marginRight: 14,
     position: 'relative',
     width: 104,
@@ -220,9 +226,17 @@ const styles = StyleSheet.create({
   laneField: {
     flex: 1,
     flexDirection: 'row',
-    height: timelineHeight,
+    minHeight: 0,
     overflow: 'hidden',
     position: 'relative',
+  },
+  dismissLayer: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 0,
   },
   overloadRegion: {
     backgroundColor: timelineTheme.colors.overload,
@@ -233,6 +247,7 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
     right: 0,
+    zIndex: 1,
   },
   infoPanel: {
     backgroundColor: timelineTheme.colors.panel,
@@ -243,7 +258,7 @@ const styles = StyleSheet.create({
     padding: 12,
     position: 'absolute',
     width: infoPanelWidth,
-    zIndex: 10,
+    zIndex: 20,
   },
   infoTitle: {
     color: timelineTheme.colors.text,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TimeScaleSelector } from '@/components/TimeScaleSelector';
 import { VerticalTimeline } from '@/components/VerticalTimeline';
@@ -11,12 +11,14 @@ import type { TimeRange } from '@/types/commitment';
 
 export default function HomeScreen() {
   const [range, setRange] = useState<TimeRange>('week');
+  const insets = useSafeAreaInsets();
   const now = useMemo(() => new Date(), []);
   const commitments = useMemo(() => createMockCommitments(now), [now]);
   const visibleWindow = useMemo(() => getVisibleWindow(range, now), [range, now]);
+  const bottomPadding = Math.max(18, insets.bottom + 14);
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: bottomPadding }]}>
       <View style={styles.header}>
         <Text style={styles.title}>DEADLINES</Text>
         <Pressable accessibilityLabel="Menu" style={styles.menuButton}>
@@ -54,14 +56,13 @@ const styles = StyleSheet.create({
   screen: {
     backgroundColor: timelineTheme.colors.background,
     flex: 1,
-    paddingBottom: 18,
     paddingHorizontal: 18,
   },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    minHeight: 76,
+    minHeight: 68,
     position: 'relative',
   },
   title: {
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
     padding: 10,
     position: 'absolute',
     right: 8,
-    top: 18,
+    top: 14,
   },
   menuLine: {
     backgroundColor: timelineTheme.colors.text,
@@ -86,29 +87,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 76,
-    paddingHorizontal: 6,
+    minHeight: 66,
+    paddingHorizontal: 8,
+    paddingTop: 8,
   },
   circleButton: {
     alignItems: 'center',
     borderColor: timelineTheme.colors.outline,
-    borderRadius: 34,
+    borderRadius: 30,
     borderWidth: 1,
-    height: 68,
+    height: 60,
     justifyContent: 'center',
-    width: 68,
+    width: 60,
   },
   listLine: {
     backgroundColor: timelineTheme.colors.text,
     borderRadius: 2,
     height: 3,
     marginVertical: 3,
-    width: 25,
+    width: 24,
   },
   plus: {
     color: timelineTheme.colors.text,
-    fontSize: 42,
+    fontSize: 38,
     fontWeight: '200',
-    lineHeight: 46,
+    lineHeight: 42,
   },
 });
