@@ -1,98 +1,117 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { TimeScaleSelector } from '@/components/TimeScaleSelector';
+import { VerticalTimeline } from '@/components/VerticalTimeline';
+import { timelineTheme } from '@/constants/theme';
+import { createMockCommitments } from '@/data/mockCommitments';
+import { getVisibleWindow } from '@/domain/workload';
+import type { Commitment, TimeRange } from '@/types/commitment';
 
 export default function HomeScreen() {
+  const [range, setRange] = useState<TimeRange>('week');
+  const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
+  const now = useMemo(() => new Date(), []);
+  const commitments = useMemo(() => createMockCommitments(now), [now]);
+  const visibleWindow = useMemo(() => getVisibleWindow(range, now), [range, now]);
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.header}>
+        <Text style={styles.title}>DEADLINES</Text>
+        <Pressable accessibilityLabel="Menu" style={styles.menuButton}>
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
+        </Pressable>
+      </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <TimeScaleSelector value={range} onChange={setRange} />
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+      <VerticalTimeline
+        commitments={commitments}
+        now={now}
+        onSelectCommitment={setSelectedCommitment}
+        range={range}
+        selectedCommitment={selectedCommitment}
+        windowEnd={visibleWindow.end}
+        windowStart={visibleWindow.start}
+      />
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <View style={styles.bottomControls}>
+        <Pressable accessibilityLabel="Commitment list" style={styles.circleButton}>
+          <View style={styles.listLine} />
+          <View style={styles.listLine} />
+          <View style={styles.listLine} />
+        </Pressable>
+        <Pressable accessibilityLabel="Add commitment" style={styles.circleButton}>
+          <Text style={styles.plus}>+</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
+    backgroundColor: timelineTheme.colors.background,
     flex: 1,
-    justifyContent: 'center',
+    paddingBottom: 18,
+    paddingHorizontal: 18,
+  },
+  header: {
+    alignItems: 'center',
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    minHeight: 76,
+    position: 'relative',
   },
   title: {
-    textAlign: 'center',
+    color: timelineTheme.colors.text,
+    fontSize: 26,
+    fontWeight: '400',
+    letterSpacing: 0,
   },
-  code: {
-    textTransform: 'uppercase',
+  menuButton: {
+    gap: 5,
+    padding: 10,
+    position: 'absolute',
+    right: 8,
+    top: 18,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  menuLine: {
+    backgroundColor: timelineTheme.colors.text,
+    height: 2,
+    width: 30,
+  },
+  bottomControls: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 76,
+    paddingHorizontal: 6,
+  },
+  circleButton: {
+    alignItems: 'center',
+    borderColor: timelineTheme.colors.outline,
+    borderRadius: 34,
+    borderWidth: 1,
+    height: 68,
+    justifyContent: 'center',
+    width: 68,
+  },
+  listLine: {
+    backgroundColor: timelineTheme.colors.text,
+    borderRadius: 2,
+    height: 3,
+    marginVertical: 3,
+    width: 25,
+  },
+  plus: {
+    color: timelineTheme.colors.text,
+    fontSize: 42,
+    fontWeight: '200',
+    lineHeight: 46,
   },
 });

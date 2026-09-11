@@ -1,11 +1,28 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import '@/global.css';
-
 import { Platform } from 'react-native';
+
+export const timelineTheme = {
+  colors: {
+    background: '#000000',
+    text: '#F7F7F7',
+    mutedText: '#A3A3A3',
+    rail: '#5C5C5C',
+    railDot: '#BDBDBD',
+    future: '#3F3F3F',
+    active: '#F5F5F5',
+    selected: '#F3F3F3',
+    selectedText: '#111111',
+    outline: '#4B4B4B',
+    overload: 'rgba(180, 180, 180, 0.12)',
+    panel: 'rgba(18, 18, 18, 0.92)',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+} as const;
 
 export const Colors = {
   light: {
@@ -16,11 +33,11 @@ export const Colors = {
     textSecondary: '#60646C',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: timelineTheme.colors.text,
+    background: timelineTheme.colors.background,
+    backgroundElement: '#171717',
+    backgroundSelected: '#2B2B2B',
+    textSecondary: timelineTheme.colors.mutedText,
   },
 } as const;
 
@@ -28,13 +45,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -61,5 +74,6 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+export const BottomTabInset = 0;
 export const MaxContentWidth = 800;
+
