@@ -7,11 +7,10 @@ import { VerticalTimeline } from '@/components/VerticalTimeline';
 import { timelineTheme } from '@/constants/theme';
 import { createMockCommitments } from '@/data/mockCommitments';
 import { getVisibleWindow } from '@/domain/workload';
-import type { Commitment, TimeRange } from '@/types/commitment';
+import type { TimeRange } from '@/types/commitment';
 
 export default function HomeScreen() {
   const [range, setRange] = useState<TimeRange>('week');
-  const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
   const now = useMemo(() => new Date(), []);
   const commitments = useMemo(() => createMockCommitments(now), [now]);
   const visibleWindow = useMemo(() => getVisibleWindow(range, now), [range, now]);
@@ -32,9 +31,7 @@ export default function HomeScreen() {
       <VerticalTimeline
         commitments={commitments}
         now={now}
-        onSelectCommitment={setSelectedCommitment}
         range={range}
-        selectedCommitment={selectedCommitment}
         windowEnd={visibleWindow.end}
         windowStart={visibleWindow.start}
       />

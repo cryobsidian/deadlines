@@ -12,7 +12,7 @@ type Props = {
   windowEnd: Date;
   height: number;
   activeCount: number;
-  onPress: (commitment: Commitment) => void;
+  onPressLine: (commitment: Commitment, anchorY: number) => void;
 };
 
 function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: number) {
@@ -26,7 +26,7 @@ export function CommitmentLane({
   windowEnd,
   height,
   activeCount,
-  onPress,
+  onPressLine,
 }: Props) {
   const status = getCommitmentStatus(commitment, now);
   const startY = getDropTrackY(new Date(commitment.startAt), windowStart, windowEnd, height);
@@ -40,10 +40,13 @@ export function CommitmentLane({
   const showRunner = status === 'active' || status === 'overdue';
   const runnerScale = Math.max(0.54, 1 - Math.max(0, activeCount - 1) * 0.1 - commitment.difficulty * 0.04);
   const titleTop = Math.min(height - 96, Math.max(36, activeTop + (activeBottom - activeTop) * 0.58));
+  const lineHitSlop = { bottom: 8, left: 12, right: 12, top: 8 };
 
   return (
-    <Pressable onPress={() => onPress(commitment)} style={styles.container}>
-      <View
+    <View style={styles.container}>
+      <Pressable
+        hitSlop={lineHitSlop}
+        onPress={(event) => onPressLine(commitment, futureTop + event.nativeEvent.locationY)}
         style={[
           styles.line,
           {
@@ -55,9 +58,12 @@ export function CommitmentLane({
         ]}
       />
       {status !== 'future' && (
-        <View
+        <Pressable
+          hitSlop={lineHitSlop}
+          onPress={(event) => onPressLine(commitment, activeTop + event.nativeEvent.locationY)}
           style={[
             styles.line,
+            styles.activeLine,
             {
               backgroundColor: timelineTheme.colors.active,
               height: Math.max(18, activeBottom - activeTop),
@@ -67,7 +73,9 @@ export function CommitmentLane({
           ]}
         />
       )}
-      <View
+      <Pressable
+        hitSlop={lineHitSlop}
+        onPress={() => onPressLine(commitment, dueY)}
         style={[
           styles.deadline,
           {
@@ -77,12 +85,16 @@ export function CommitmentLane({
         ]}
       />
       {showRunner && (
-        <View style={[styles.runnerSlot, { bottom: 8 }]}>
+        <View pointerEvents="none" style={[styles.runnerSlot, { bottom: 8 }]}>
           <Runner fatigue={activeCount} scale={runnerScale} />
         </View>
       )}
-      {showRunner && <Text style={[styles.title, { top: titleTop }]}>{commitment.title}</Text>}
-    </Pressable>
+      {showRunner && (
+        <Text pointerEvents="none" style={[styles.title, { top: titleTop }]}>
+          {commitment.title}
+        </Text>
+      )}
+    </View>
   );
 }
 
@@ -99,6 +111,9 @@ const styles = StyleSheet.create({
     opacity: 0.95,
     position: 'absolute',
   },
+  activeLine: {
+    zIndex: 2,
+  },
   deadline: {
     backgroundColor: timelineTheme.colors.background,
     borderRadius: 6,
@@ -106,6 +121,7 @@ const styles = StyleSheet.create({
     height: 12,
     position: 'absolute',
     width: 12,
+    zIndex: 3,
   },
   runnerSlot: {
     alignItems: 'center',

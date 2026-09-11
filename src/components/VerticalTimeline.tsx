@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { CommitmentLane } from '@/components/CommitmentLane';
@@ -11,14 +12,22 @@ import {
 } from '@/domain/workload';
 import type { Commitment, TimeRange } from '@/types/commitment';
 
+const timelineHeight = 560;
+const infoPanelWidth = 212;
+const infoPanelHeight = 116;
+
 type Props = {
   commitments: Commitment[];
   now: Date;
   range: TimeRange;
   windowStart: Date;
   windowEnd: Date;
-  selectedCommitment: Commitment | null;
-  onSelectCommitment: (commitment: Commitment) => void;
+};
+
+type Selection = {
+  commitment: Commitment;
+  laneIndex: number;
+  anchorY: number;
 };
 
 function formatTick(date: Date, range: TimeRange, now: Date) {
@@ -42,19 +51,22 @@ function formatDateTime(value: string) {
   })}`;
 }
 
-export function VerticalTimeline({
-  commitments,
-  now,
-  range,
-  windowStart,
-  windowEnd,
-  selectedCommitment,
-  onSelectCommitment,
-}: Props) {
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function VerticalTimeline({ commitments, now, range, windowStart, windowEnd }: Props) {
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const [laneFieldWidth, setLaneFieldWidth] = useState(0);
   const ticks = getVisibleDateTicks(range, windowStart);
   const overloadPeriods = identifyOverloadPeriods(commitments, windowStart, windowEnd);
   const activeCount = commitments.filter((commitment) => getCommitmentStatus(commitment, now) === 'active').length;
   const score = calculateWorkloadScore(commitments, now);
+  const laneWidth = laneFieldWidth > 0 ? laneFieldWidth / commitments.length : 0;
+  const panelLeft = selection
+    ? clamp(selection.laneIndex * laneWidth + laneWidth * 0.58, 8, Math.max(8, laneFieldWidth - infoPanelWidth - 8))
+    : 0;
+  const panelTop = selection ? clamp(selection.anchorY - 20, 8, timelineHeight - infoPanelHeight - 8) : 0;
 
   return (
     <View style={styles.outer}>
@@ -66,7 +78,7 @@ export function VerticalTimeline({
         <View style={styles.railColumn}>
           <View style={styles.railLine} />
           {ticks.map((tick) => {
-            const top = (1 - getTimePosition(tick, windowStart, windowEnd)) * 560;
+            const top = (1 - getTimePosition(tick, windowStart, windowEnd)) * timelineHeight;
             const label = formatTick(tick, range, now);
             const isToday = label === 'TODAY';
             return (
@@ -78,13 +90,18 @@ export function VerticalTimeline({
           })}
         </View>
 
-        <View style={styles.laneField}>
+        <View
+          onLayout={(event) => setLaneFieldWidth(event.nativeEvent.layout.width)}
+          style={styles.laneField}>
           {overloadPeriods.map((period) => {
-            const top = getTimePosition(period.start, windowStart, windowEnd) * 100;
-            const bottom = getTimePosition(period.end, windowStart, windowEnd) * 100;
+            const startY = (1 - getTimePosition(period.start, windowStart, windowEnd)) * 100;
+            const endY = (1 - getTimePosition(period.end, windowStart, windowEnd)) * 100;
+            const top = Math.min(startY, endY);
+            const bottom = Math.max(startY, endY);
             return (
               <View
                 key={`${period.start.toISOString()}-${period.end.toISOString()}`}
+                pointerEvents="none"
                 style={[
                   styles.overloadRegion,
                   {
@@ -95,29 +112,31 @@ export function VerticalTimeline({
               />
             );
           })}
-          {commitments.map((commitment) => (
+          {commitments.map((commitment, index) => (
             <CommitmentLane
               activeCount={activeCount}
               commitment={commitment}
-              height={560}
+              height={timelineHeight}
               key={commitment.id}
               now={now}
-              onPress={onSelectCommitment}
+              onPressLine={(pressedCommitment, anchorY) =>
+                setSelection({ commitment: pressedCommitment, laneIndex: index, anchorY })
+              }
               windowEnd={windowEnd}
               windowStart={windowStart}
             />
           ))}
+
+          {selection && (
+            <View style={[styles.infoPanel, { left: panelLeft, top: panelTop }]}>
+              <Text style={styles.infoTitle}>{selection.commitment.title}</Text>
+              <Text style={styles.infoText}>Starts {formatDateTime(selection.commitment.startAt)}</Text>
+              <Text style={styles.infoText}>Due {formatDateTime(selection.commitment.dueAt)}</Text>
+              <Text style={styles.infoText}>Difficulty {selection.commitment.difficulty}</Text>
+            </View>
+          )}
         </View>
       </View>
-
-      {selectedCommitment && (
-        <View style={styles.infoPanel}>
-          <Text style={styles.infoTitle}>{selectedCommitment.title}</Text>
-          <Text style={styles.infoText}>Starts {formatDateTime(selectedCommitment.startAt)}</Text>
-          <Text style={styles.infoText}>Due {formatDateTime(selectedCommitment.dueAt)}</Text>
-          <Text style={styles.infoText}>Difficulty {selectedCommitment.difficulty}</Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -150,10 +169,10 @@ const styles = StyleSheet.create({
   timeline: {
     flex: 1,
     flexDirection: 'row',
-    minHeight: 560,
+    minHeight: timelineHeight,
   },
   railColumn: {
-    height: 560,
+    height: timelineHeight,
     marginRight: 14,
     position: 'relative',
     width: 104,
@@ -201,7 +220,7 @@ const styles = StyleSheet.create({
   laneField: {
     flex: 1,
     flexDirection: 'row',
-    height: 560,
+    height: timelineHeight,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -216,15 +235,15 @@ const styles = StyleSheet.create({
     right: 0,
   },
   infoPanel: {
-    alignSelf: 'center',
     backgroundColor: timelineTheme.colors.panel,
     borderColor: timelineTheme.colors.outline,
     borderRadius: 8,
     borderWidth: 1,
-    bottom: 4,
+    minHeight: infoPanelHeight,
     padding: 12,
     position: 'absolute',
-    width: '82%',
+    width: infoPanelWidth,
+    zIndex: 10,
   },
   infoTitle: {
     color: timelineTheme.colors.text,
@@ -240,6 +259,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-
-
-
