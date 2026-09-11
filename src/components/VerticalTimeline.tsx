@@ -12,7 +12,7 @@ import {
 } from '@/domain/workload';
 import type { Commitment, TimeRange } from '@/types/commitment';
 
-const fallbackTimelineHeight = 420;
+const fallbackTimelineHeight = 520;
 const infoPanelWidth = 212;
 const infoPanelHeight = 116;
 
@@ -55,6 +55,10 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function getTopContentInset(height: number) {
+  return clamp(height * 0.18, 92, 118);
+}
+
 export function VerticalTimeline({ commitments, now, range, windowStart, windowEnd }: Props) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [laneFieldSize, setLaneFieldSize] = useState({ height: fallbackTimelineHeight, width: 0 });
@@ -63,23 +67,21 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
   const activeCount = commitments.filter((commitment) => getCommitmentStatus(commitment, now) === 'active').length;
   const score = calculateWorkloadScore(commitments, now);
   const timelineHeight = Math.max(1, laneFieldSize.height);
+  const contentTopInset = getTopContentInset(timelineHeight);
+  const contentHeight = Math.max(1, timelineHeight - contentTopInset);
   const laneWidth = laneFieldSize.width > 0 ? laneFieldSize.width / commitments.length : 0;
   const panelLeft = selection
     ? clamp(selection.laneIndex * laneWidth + laneWidth * 0.58, 8, Math.max(8, laneFieldSize.width - infoPanelWidth - 8))
     : 0;
-  const panelTop = selection ? clamp(selection.anchorY - 20, 8, timelineHeight - infoPanelHeight - 8) : 0;
+  const panelTop = selection ? clamp(selection.anchorY - 20, contentTopInset, timelineHeight - infoPanelHeight - 8) : 0;
 
   return (
     <View style={styles.outer}>
-      <View style={styles.scoreRow}>
-        <Text style={styles.scoreLabel}>WORKLOAD</Text>
-        <Text style={styles.scoreValue}>{score}</Text>
-      </View>
       <View style={styles.timeline}>
         <View style={styles.railColumn}>
           <View style={styles.railLine} />
           {ticks.map((tick) => {
-            const top = (1 - getTimePosition(tick, windowStart, windowEnd)) * timelineHeight;
+            const top = contentTopInset + (1 - getTimePosition(tick, windowStart, windowEnd)) * contentHeight;
             const label = formatTick(tick, range, now);
             const isToday = label === 'TODAY';
             return (
@@ -99,9 +101,14 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
           style={styles.laneField}>
           <Pressable accessibilityLabel="Dismiss commitment details" onPress={() => setSelection(null)} style={styles.dismissLayer} />
 
+          <View pointerEvents="none" style={styles.scoreBadge}>
+            <Text style={styles.scoreLabel}>WORKLOAD</Text>
+            <Text style={styles.scoreValue}>{score}</Text>
+          </View>
+
           {overloadPeriods.map((period) => {
-            const startY = (1 - getTimePosition(period.start, windowStart, windowEnd)) * 100;
-            const endY = (1 - getTimePosition(period.end, windowStart, windowEnd)) * 100;
+            const startY = contentTopInset + (1 - getTimePosition(period.start, windowStart, windowEnd)) * contentHeight;
+            const endY = contentTopInset + (1 - getTimePosition(period.end, windowStart, windowEnd)) * contentHeight;
             const top = Math.min(startY, endY);
             const bottom = Math.max(startY, endY);
             return (
@@ -111,8 +118,8 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
                 style={[
                   styles.overloadRegion,
                   {
-                    top: `${top}%`,
-                    height: `${Math.max(4, bottom - top)}%`,
+                    top,
+                    height: Math.max(4, bottom - top),
                   },
                 ]}
               />
@@ -122,12 +129,13 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
             <CommitmentLane
               activeCount={activeCount}
               commitment={commitment}
-              height={timelineHeight}
+              height={contentHeight}
               key={commitment.id}
               now={now}
               onPressLine={(pressedCommitment, anchorY) =>
                 setSelection({ commitment: pressedCommitment, laneIndex: index, anchorY })
               }
+              topInset={contentTopInset}
               windowEnd={windowEnd}
               windowStart={windowStart}
             />
@@ -152,13 +160,14 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
-  scoreRow: {
+  scoreBadge: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    justifyContent: 'flex-end',
-    marginBottom: 8,
-    paddingRight: 14,
+    position: 'absolute',
+    right: 10,
+    top: 96,
+    zIndex: 15,
   },
   scoreLabel: {
     color: timelineTheme.colors.mutedText,
@@ -179,15 +188,15 @@ const styles = StyleSheet.create({
   },
   railColumn: {
     flex: 0,
-    marginRight: 14,
+    marginRight: 10,
     position: 'relative',
-    width: 104,
+    width: 86,
   },
   railLine: {
     backgroundColor: timelineTheme.colors.rail,
     bottom: 0,
     position: 'absolute',
-    right: 8,
+    right: 5,
     top: 0,
     width: 1,
   },
@@ -196,16 +205,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     position: 'absolute',
-    right: 2,
+    right: -1,
     transform: [{ translateY: -8 }],
-    width: 102,
+    width: 86,
   },
   tickLabel: {
     color: timelineTheme.colors.mutedText,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
     letterSpacing: 0,
-    marginRight: 16,
+    marginRight: 12,
   },
   todayLabel: {
     color: timelineTheme.colors.text,
@@ -274,3 +283,4 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+

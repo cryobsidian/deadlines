@@ -11,12 +11,13 @@ type Props = {
   windowStart: Date;
   windowEnd: Date;
   height: number;
+  topInset: number;
   activeCount: number;
   onPressLine: (commitment: Commitment, anchorY: number) => void;
 };
 
-function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: number) {
-  return (1 - getTimePosition(date, windowStart, windowEnd)) * height;
+function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: number, topInset: number) {
+  return topInset + (1 - getTimePosition(date, windowStart, windowEnd)) * height;
 }
 
 export function CommitmentLane({
@@ -25,13 +26,14 @@ export function CommitmentLane({
   windowStart,
   windowEnd,
   height,
+  topInset,
   activeCount,
   onPressLine,
 }: Props) {
   const status = getCommitmentStatus(commitment, now);
-  const startY = getDropTrackY(new Date(commitment.startAt), windowStart, windowEnd, height);
-  const dueY = getDropTrackY(new Date(commitment.dueAt), windowStart, windowEnd, height);
-  const currentY = getDropTrackY(now, windowStart, windowEnd, height);
+  const startY = getDropTrackY(new Date(commitment.startAt), windowStart, windowEnd, height, topInset);
+  const dueY = getDropTrackY(new Date(commitment.dueAt), windowStart, windowEnd, height, topInset);
+  const currentY = getDropTrackY(now, windowStart, windowEnd, height, topInset);
   const futureTop = Math.min(startY, dueY);
   const futureBottom = Math.max(startY, dueY);
   const activeTop = Math.min(dueY, currentY);
@@ -39,11 +41,11 @@ export function CommitmentLane({
   const lineWidth = 2 + commitment.difficulty * 2;
   const showRunner = status === 'active' || status === 'overdue';
   const runnerScale = Math.max(0.54, 1 - Math.max(0, activeCount - 1) * 0.1 - commitment.difficulty * 0.04);
-  const titleTop = Math.min(height - 96, Math.max(36, activeTop + (activeBottom - activeTop) * 0.58));
+  const titleTop = Math.min(topInset + height - 96, Math.max(topInset + 24, activeTop + (activeBottom - activeTop) * 0.58));
   const lineHitSlop = { bottom: 8, left: 12, right: 12, top: 8 };
 
   return (
-    <View style={styles.container}>
+    <View pointerEvents="box-none" style={styles.container}>
       <Pressable
         hitSlop={lineHitSlop}
         onPress={(event) => onPressLine(commitment, futureTop + event.nativeEvent.locationY)}
@@ -105,14 +107,16 @@ const styles = StyleSheet.create({
     height: '100%',
     minWidth: 42,
     position: 'relative',
+    zIndex: 5,
   },
   line: {
     borderRadius: 8,
     opacity: 0.95,
     position: 'absolute',
+    zIndex: 4,
   },
   activeLine: {
-    zIndex: 2,
+    zIndex: 6,
   },
   deadline: {
     backgroundColor: timelineTheme.colors.background,
@@ -121,13 +125,14 @@ const styles = StyleSheet.create({
     height: 12,
     position: 'absolute',
     width: 12,
-    zIndex: 3,
+    zIndex: 7,
   },
   runnerSlot: {
     alignItems: 'center',
     height: 58,
     position: 'absolute',
     width: 58,
+    zIndex: 1,
   },
   title: {
     color: timelineTheme.colors.text,
@@ -137,7 +142,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     position: 'absolute',
     width: 92,
+    zIndex: 1,
   },
 });
-
 

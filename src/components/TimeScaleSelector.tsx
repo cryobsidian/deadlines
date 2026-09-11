@@ -34,12 +34,12 @@ const styles = StyleSheet.create({
   container: {
     alignSelf: 'center',
     borderColor: timelineTheme.colors.outline,
-    borderRadius: 28,
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: 'row',
-    height: 56,
+    height: 44,
     overflow: 'hidden',
-    width: 320,
+    width: 260,
   },
   option: {
     alignItems: 'center',
@@ -48,11 +48,11 @@ const styles = StyleSheet.create({
   },
   selected: {
     backgroundColor: timelineTheme.colors.selected,
-    borderRadius: 28,
+    borderRadius: 22,
   },
   label: {
     color: timelineTheme.colors.text,
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '500',
     letterSpacing: 0,
   },
@@ -61,3 +61,5 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+
+

@@ -18,18 +18,7 @@ export default function HomeScreen() {
   const bottomPadding = Math.max(18, insets.bottom + 14);
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: bottomPadding }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>DEADLINES</Text>
-        <Pressable accessibilityLabel="Menu" style={styles.menuButton}>
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
-        </Pressable>
-      </View>
-
-      <TimeScaleSelector value={range} onChange={setRange} />
-
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: bottomPadding }]}> 
       <VerticalTimeline
         commitments={commitments}
         now={now}
@@ -37,6 +26,17 @@ export default function HomeScreen() {
         windowEnd={visibleWindow.end}
         windowStart={visibleWindow.start}
       />
+
+      <View pointerEvents="box-none" style={styles.topOverlay}>
+        <View pointerEvents="none" style={styles.overlayMask} />
+        <Text style={styles.title}>D E A D L I N E S</Text>
+        <Pressable accessibilityLabel="Menu" style={styles.menuButton}>
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
+        </Pressable>
+        <TimeScaleSelector value={range} onChange={setRange} />
+      </View>
 
       <View style={styles.bottomControls}>
         <Pressable accessibilityLabel="Commitment list" style={styles.circleButton}>
@@ -56,40 +56,58 @@ const styles = StyleSheet.create({
   screen: {
     backgroundColor: timelineTheme.colors.background,
     flex: 1,
-    paddingHorizontal: 18,
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    minHeight: 68,
+    paddingHorizontal: 8,
     position: 'relative',
+  },
+  topOverlay: {
+    alignItems: 'flex-start',
+    left: 92,
+    paddingTop: 10,
+    position: 'absolute',
+    right: 16,
+    top: 0,
+    zIndex: 30,
+  },
+  overlayMask: {
+    backgroundColor: timelineTheme.colors.background,
+    bottom: -10,
+    left: -14,
+    opacity: 0.96,
+    position: 'absolute',
+    right: -16,
+    top: 0,
   },
   title: {
     color: timelineTheme.colors.text,
-    fontSize: 26,
+    fontSize: 17,
     fontWeight: '400',
     letterSpacing: 0,
+    lineHeight: 28,
+    marginLeft: 8,
+    textAlign: 'left',
+    zIndex: 1,
   },
   menuButton: {
     gap: 5,
-    padding: 10,
+    padding: 8,
     position: 'absolute',
-    right: 8,
-    top: 14,
+    right: 0,
+    top: 7,
+    zIndex: 2,
   },
   menuLine: {
     backgroundColor: timelineTheme.colors.text,
     height: 2,
-    width: 30,
+    width: 28,
   },
   bottomControls: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 66,
-    paddingHorizontal: 8,
+    paddingHorizontal: 18,
     paddingTop: 8,
+    zIndex: 20,
   },
   circleButton: {
     alignItems: 'center',
