@@ -15,6 +15,10 @@ type Props = {
   onPress: (commitment: Commitment) => void;
 };
 
+function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: number) {
+  return (1 - getTimePosition(date, windowStart, windowEnd)) * height;
+}
+
 export function CommitmentLane({
   commitment,
   now,
@@ -25,16 +29,17 @@ export function CommitmentLane({
   onPress,
 }: Props) {
   const status = getCommitmentStatus(commitment, now);
-  const startY = getTimePosition(new Date(commitment.startAt), windowStart, windowEnd) * height;
-  const dueY = getTimePosition(new Date(commitment.dueAt), windowStart, windowEnd) * height;
-  const currentY = getTimePosition(now, windowStart, windowEnd) * height;
-  const top = Math.min(startY, dueY);
-  const bottom = Math.max(startY, dueY);
-  const futureBottom = status === 'future' ? bottom : Math.max(top, Math.min(currentY, bottom));
-  const activeTop = Math.max(top, Math.min(currentY, bottom));
+  const startY = getDropTrackY(new Date(commitment.startAt), windowStart, windowEnd, height);
+  const dueY = getDropTrackY(new Date(commitment.dueAt), windowStart, windowEnd, height);
+  const currentY = getDropTrackY(now, windowStart, windowEnd, height);
+  const futureTop = Math.min(startY, dueY);
+  const futureBottom = Math.max(startY, dueY);
+  const activeTop = Math.min(dueY, currentY);
+  const activeBottom = Math.max(dueY, currentY);
   const lineWidth = 2 + commitment.difficulty * 2;
   const showRunner = status === 'active' || status === 'overdue';
   const runnerScale = Math.max(0.54, 1 - Math.max(0, activeCount - 1) * 0.1 - commitment.difficulty * 0.04);
+  const titleTop = Math.min(height - 96, Math.max(36, activeTop + (activeBottom - activeTop) * 0.58));
 
   return (
     <Pressable onPress={() => onPress(commitment)} style={styles.container}>
@@ -43,8 +48,8 @@ export function CommitmentLane({
           styles.line,
           {
             backgroundColor: timelineTheme.colors.future,
-            height: Math.max(16, futureBottom - top),
-            top,
+            height: Math.max(16, futureBottom - futureTop),
+            top: futureTop,
             width: lineWidth,
           },
         ]}
@@ -55,7 +60,7 @@ export function CommitmentLane({
             styles.line,
             {
               backgroundColor: timelineTheme.colors.active,
-              height: Math.max(18, bottom - activeTop),
+              height: Math.max(18, activeBottom - activeTop),
               top: activeTop,
               width: lineWidth,
             },
@@ -67,7 +72,7 @@ export function CommitmentLane({
           styles.deadline,
           {
             borderColor: status === 'future' ? timelineTheme.colors.future : timelineTheme.colors.active,
-            top: Math.max(0, bottom - 6),
+            top: Math.max(0, dueY - 6),
           },
         ]}
       />
@@ -76,7 +81,7 @@ export function CommitmentLane({
           <Runner fatigue={activeCount} scale={runnerScale} />
         </View>
       )}
-      {showRunner && <Text style={[styles.title, { top: Math.min(height - 90, Math.max(42, activeTop + 24)) }]}>{commitment.title}</Text>}
+      {showRunner && <Text style={[styles.title, { top: titleTop }]}>{commitment.title}</Text>}
     </Pressable>
   );
 }

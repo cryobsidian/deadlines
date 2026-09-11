@@ -1,6 +1,7 @@
 import type { Commitment, CommitmentStatus, TimeRange, WorkloadBand } from '@/types/commitment';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
 
 export const difficultyWeights: Record<Commitment['difficulty'], number> = {
   1: 1,
@@ -14,6 +15,10 @@ export function addDays(date: Date, days: number) {
   return next;
 }
 
+export function addHours(date: Date, hours: number) {
+  return new Date(date.getTime() + hours * HOUR_MS);
+}
+
 export function startOfDay(date: Date) {
   const next = new Date(date);
   next.setHours(0, 0, 0, 0);
@@ -21,7 +26,7 @@ export function startOfDay(date: Date) {
 }
 
 export function getVisibleWindow(range: TimeRange, now = new Date()) {
-  const start = range === 'day' ? new Date(now) : startOfDay(now);
+  const start = new Date(now);
   const days = range === 'day' ? 1 : range === 'week' ? 7 : 30;
   return {
     start,
@@ -135,11 +140,7 @@ export function getTimePosition(date: Date, windowStart: Date, windowEnd: Date) 
 
 export function getVisibleDateTicks(range: TimeRange, windowStart: Date) {
   if (range === 'day') {
-    return [0, 6, 12, 18, 24].map((hour) => {
-      const date = new Date(windowStart);
-      date.setHours(hour, 0, 0, 0);
-      return date;
-    });
+    return [0, 6, 12, 18, 24].map((hourOffset) => addHours(windowStart, hourOffset));
   }
 
   const count = range === 'week' ? 7 : 6;

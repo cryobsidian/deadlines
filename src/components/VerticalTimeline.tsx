@@ -66,7 +66,7 @@ export function VerticalTimeline({
         <View style={styles.railColumn}>
           <View style={styles.railLine} />
           {ticks.map((tick) => {
-            const top = getTimePosition(tick, windowStart, windowEnd) * 560;
+            const top = (1 - getTimePosition(tick, windowStart, windowEnd)) * 560;
             const label = formatTick(tick, range, now);
             const isToday = label === 'TODAY';
             return (
@@ -240,5 +240,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
 
 
