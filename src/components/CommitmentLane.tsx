@@ -42,11 +42,11 @@ export function CommitmentLane({
   const showRunner = status === 'active' || status === 'overdue';
   const runnerScale = Math.max(0.54, 1 - Math.max(0, activeCount - 1) * 0.1 - commitment.difficulty * 0.04);
   const lineHitSlop = { bottom: 8, left: 12, right: 12, top: 8 };
-  // Place label directly on top of the bar (above deadline marker)
-  const rawTitleTop = dueY - 28;
+  // Place label directly on top of the bar (above deadline marker) - offset increased for larger text
+  const rawTitleTop = dueY - 34;
   // Keep label below the header overlay (zIndex 30) so it stays visible
   const minVisibleTop = topInset + 74;
-  const titleTop = Math.max(6, Math.min(rawTitleTop, height + topInset - 24));
+  const titleTop = Math.max(6, Math.min(rawTitleTop, height + topInset - 30));
   const clampedTitleTop = rawTitleTop < minVisibleTop ? minVisibleTop : titleTop;
 
   return (
@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: timelineTheme.colors.text,
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.2,
-    lineHeight: 12,
+    lineHeight: 15,
     textAlign: 'center',
   },
 });
