@@ -141,7 +141,7 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
 
               {Platform.OS === 'web' && duePicker ? (
                 <View style={styles.webFallback}>
-                  <Text style={styles.webFallbackText}>Native date/time picker is used on iOS and Android. For web preview, adjust with the quick controls below.</Text>
+                  <Text style={styles.webFallbackText}>{duePicker === 'date' ? 'Adjust the due date' : 'Adjust the due time'}</Text>
                   {duePicker === 'date' ? (
                     <View style={styles.quickRow}>
                       <QuickButton label="−1 day" onPress={() => setDue((current) => new Date(current.getTime() - 86400000))} />
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   pickerValue: { color: '#F4F1ED', fontSize: 13, fontWeight: '700' },
   hint: { color: '#666', fontSize: 9, marginTop: 5 },
   webFallback: { backgroundColor: '#151515', borderColor: '#303030', borderRadius: 12, borderWidth: 1, marginTop: 10, padding: 12 },
-  webFallbackText: { color: '#7D7D7D', fontSize: 10, lineHeight: 15 },
+  webFallbackText: { color: '#8D8D8D', fontSize: 10, fontWeight: '700', lineHeight: 15 },
   quickRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
   quickButton: { alignItems: 'center', borderColor: '#393939', borderRadius: 9, borderWidth: 1, flex: 1, paddingVertical: 9 },
   quickButtonText: { color: '#D9D6D2', fontSize: 10, fontWeight: '800' },
