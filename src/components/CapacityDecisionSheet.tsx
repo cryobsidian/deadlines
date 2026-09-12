@@ -5,6 +5,8 @@ import type { DailyCapacity } from '@/components/CapacityCheckIn';
 import { addHours, calculateWorkloadScore, getCapacityThresholds, getWorkloadBand, identifyOverloadPeriods, isCommitmentActiveOn } from '@/domain/workload';
 import type { Commitment, CommitmentPriority } from '@/types/commitment';
 
+export type ProtectedRecoveryWindow = { start: string; end: string };
+
 const priorityRank: Record<CommitmentPriority, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 
 function capacityLabel(capacity: DailyCapacity) {
@@ -63,13 +65,14 @@ function formatWindow(start: Date, end: Date) {
   return `${day} · ${startTime}–${endTime}`;
 }
 
-export function CapacityDecisionSheet({ commitments, capacity, now, visible, onClose, onMoveEarlier }: {
+export function CapacityDecisionSheet({ commitments, capacity, now, visible, onClose, onMoveEarlier, onProtectRecovery }: {
   commitments: Commitment[];
   capacity: DailyCapacity;
   now: Date;
   visible: boolean;
   onClose: () => void;
   onMoveEarlier: (id: string) => void;
+  onProtectRecovery?: (window: ProtectedRecoveryWindow) => void;
 }) {
   const [protectedWindow, setProtectedWindow] = useState<string | null>(null);
   const score = calculateWorkloadScore(commitments, now);
@@ -78,6 +81,12 @@ export function CapacityDecisionSheet({ commitments, capacity, now, visible, onC
   const candidate = useMemo(() => findRebalanceCandidate(commitments, now), [commitments, now]);
   const recovery = useMemo(() => findRecoveryWindow(commitments, now), [commitments, now, capacity]);
   const note = capacity === 'low' ? `Lower capacity today: strain begins at ${thresholds.strained}.` : capacity === 'okay' ? 'Today has a little less room than a high-capacity day.' : 'Current workload is within a higher-capacity day.';
+
+  function protectRecovery() {
+    if (!recovery) return;
+    setProtectedWindow(formatWindow(recovery.start, recovery.end));
+    onProtectRecovery?.({ start: recovery.start.toISOString(), end: recovery.end.toISOString() });
+  }
 
   return (
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent transparent visible={visible}>
@@ -104,7 +113,7 @@ export function CapacityDecisionSheet({ commitments, capacity, now, visible, onC
             <View style={styles.recoveryBox}>
               <View style={styles.recoveryHeader}><View><Text style={styles.sectionLabel}>RECOVERY WINDOW</Text><Text style={styles.recoveryTime}>{formatWindow(recovery.start, recovery.end)}</Text></View><Text style={styles.recoveryMark}>○</Text></View>
               <Text style={styles.actionText}>First stable three-hour window after the nearest pressure period, with low predicted load and no hard high-priority commitment.</Text>
-              <Pressable onPress={() => setProtectedWindow(formatWindow(recovery.start, recovery.end))} style={[styles.secondaryButton, protectedWindow && styles.secondaryButtonActive]}><Text style={styles.secondaryButtonText}>{protectedWindow ? 'Recovery protected' : 'Protect this time'}</Text></Pressable>
+              <Pressable onPress={protectRecovery} style={[styles.secondaryButton, protectedWindow && styles.secondaryButtonActive]}><Text style={styles.secondaryButtonText}>{protectedWindow ? 'Recovery protected' : 'Protect this time'}</Text></Pressable>
               {protectedWindow ? <Text style={styles.protectedText}>Future rebalancing should avoid filling this window.</Text> : null}
             </View>
           ) : null}
