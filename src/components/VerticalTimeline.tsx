@@ -57,7 +57,11 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function getTopContentInset(height: number) {
-  return clamp(height * 0.16, 84, 106);
+  return clamp(height * 0.07, 42, 58);
+}
+
+function getBottomContentInset(height: number) {
+  return clamp(height * 0.075, 48, 66);
 }
 
 function getPeriodMidpoint(period: OverloadPeriod) {
@@ -123,9 +127,10 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
   const currentBand = getWorkloadBand(score);
   const timelineHeight = Math.max(1, laneFieldSize.height);
   const contentTopInset = getTopContentInset(timelineHeight);
-  const contentHeight = Math.max(1, timelineHeight - contentTopInset);
+  const contentBottomInset = getBottomContentInset(timelineHeight);
+  const contentHeight = Math.max(1, timelineHeight - contentTopInset - contentBottomInset);
   const currentY = contentTopInset + (1 - getTimePosition(now, windowStart, windowEnd)) * contentHeight;
-  const runnerTop = clamp(currentY - 31, contentTopInset + 36, timelineHeight - 58);
+  const runnerTop = clamp(currentY - 31, contentTopInset + 28, timelineHeight - contentBottomInset - 50);
 
   const pressureItems = pressureSelection ? getPressureCommitments(commitments, pressureSelection) : [];
   const rebalanceCandidate = getRebalanceCandidate(pressureItems);
@@ -191,7 +196,7 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
                   setPressureSelection(period);
                   setShowPreview(false);
                 }}
-                style={[styles.overloadRegion, { top, height: regionHeight }]}> 
+                style={[styles.overloadRegion, { top, height: regionHeight }]}>
                 <Text style={styles.pressureLabel}>HIGH PRESSURE</Text>
               </Pressable>
             );
@@ -323,7 +328,7 @@ const styles = StyleSheet.create({
   todayDot: { backgroundColor: '#ECE9E5' },
   laneField: { flex: 1, flexDirection: 'row', minHeight: 0, overflow: 'hidden', paddingLeft: USER_GUTTER_WIDTH, position: 'relative' },
   dismissLayer: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: 0 },
-  statusReadout: { alignItems: 'center', flexDirection: 'row', gap: 6, position: 'absolute', right: 6, top: 72, zIndex: 15 },
+  statusReadout: { alignItems: 'center', flexDirection: 'row', gap: 6, position: 'absolute', right: 6, top: 44, zIndex: 15 },
   statusDot: { backgroundColor: '#777', borderRadius: 4, height: 5, width: 5 },
   statusDotStrained: { backgroundColor: '#F39A84' },
   statusDotOverloaded: { backgroundColor: '#FF6F61' },
