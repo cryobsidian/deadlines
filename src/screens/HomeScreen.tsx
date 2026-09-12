@@ -47,6 +47,11 @@ export default function HomeScreen() {
     setCommitments((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   }
 
+  function completeCommitment(id: string) {
+    updateCommitment(id, { completedAt: new Date().toISOString() });
+    if (selected?.id === id) setSelected(null);
+  }
+
   function moveCommitmentEarlier(id: string) {
     setCommitments((current) => current.map((item) => {
       if (item.id !== id) return item;
@@ -78,13 +83,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: Math.max(16, insets.bottom + 10) }]}>
-      <ScrollView
-        ref={scrollRef}
-        bounces
-        contentContainerStyle={styles.scrollContent}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
-        showsVerticalScrollIndicator={false}
-        style={styles.scroll}>
+      <ScrollView ref={scrollRef} bounces contentContainerStyle={styles.scrollContent} onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })} showsVerticalScrollIndicator={false} style={styles.scroll}>
         <View style={styles.headerSafeSpace} />
         <View style={[styles.canvas, { height: canvasHeight }]}>
           <VerticalTimeline commitments={commitments} now={now} onUpdateCommitment={updateCommitment} range={range} windowEnd={visibleWindow.end} windowStart={visibleWindow.start} />
@@ -103,11 +102,7 @@ export default function HomeScreen() {
 
       <View style={styles.bottomControls}>
         <Pressable onPress={() => setShowList(true)} style={styles.circleButton}>
-          <View style={styles.listGlyph}>
-            <View style={[styles.listStroke, { width: 16 }]} />
-            <View style={[styles.listStroke, { width: 22 }]} />
-            <View style={[styles.listStroke, { width: 13 }]} />
-          </View>
+          <View style={styles.listGlyph}><View style={[styles.listStroke, { width: 16 }]} /><View style={[styles.listStroke, { width: 22 }]} /><View style={[styles.listStroke, { width: 13 }]} /></View>
         </Pressable>
         <CapacityPill onPress={() => setShowCapacity(true)} value={capacity} />
         <Pressable onPress={() => setShowAdd(true)} style={styles.circleButton}>
@@ -116,15 +111,7 @@ export default function HomeScreen() {
       </View>
 
       <CapacityCheckIn onChange={handleCapacityChange} onClose={() => setShowCapacity(false)} value={capacity} visible={showCapacity} />
-      <CapacityDecisionSheet
-        capacity={capacity}
-        commitments={commitments}
-        now={now}
-        onClose={() => setShowDecision(false)}
-        onMoveEarlier={moveCommitmentEarlier}
-        onProtectRecovery={setProtectedRecovery}
-        visible={showDecision}
-      />
+      <CapacityDecisionSheet capacity={capacity} commitments={commitments} now={now} onClose={() => setShowDecision(false)} onMoveEarlier={moveCommitmentEarlier} onProtectRecovery={setProtectedRecovery} visible={showDecision} />
 
       <AddCommitmentModal now={now} onAdd={(commitment) => setCommitments((current) => [...current, commitment])} onClose={() => setShowAdd(false)} visible={showAdd} />
 
@@ -155,10 +142,16 @@ export default function HomeScreen() {
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               {activeCommitments.map((item) => (
-                <Pressable key={item.id} onPress={() => { setShowList(false); setSelected(item); }} style={styles.commitmentRow}>
-                  <View style={styles.commitmentCopy}><Text style={styles.commitmentTitle}>{item.title}</Text><Text style={styles.commitmentMeta}>{titleCase(item.category ?? 'personal')} · {titleCase(item.priority ?? 'medium')}</Text></View>
+                <View key={item.id} style={styles.commitmentRow}>
+                  <Pressable onPress={() => { setShowList(false); setSelected(item); }} style={styles.commitmentCopy}>
+                    <Text style={styles.commitmentTitle}>{item.title}</Text>
+                    <Text style={styles.commitmentMeta}>{titleCase(item.category ?? 'personal')} · {titleCase(item.priority ?? 'medium')}</Text>
+                  </Pressable>
                   <Text style={styles.commitmentDue}>{new Date(item.dueAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</Text>
-                </Pressable>
+                  <Pressable accessibilityLabel={`Mark ${item.title} complete`} hitSlop={8} onPress={() => completeCommitment(item.id)} style={styles.completeButton}>
+                    <View style={styles.completeRing}><View style={styles.completeTickA} /><View style={styles.completeTickB} /></View>
+                  </Pressable>
+                </View>
               ))}
             </ScrollView>
           </View>
@@ -178,6 +171,9 @@ export default function HomeScreen() {
                 <Detail label="Flexibility" value={titleCase(selected.flexibility ?? 'flexible')} />
                 <Detail label="Due" value={new Date(selected.dueAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} />
               </View>
+              <Pressable onPress={() => completeCommitment(selected.id)} style={styles.completeAction}>
+                <Text style={styles.completeActionText}>Mark as complete</Text>
+              </Pressable>
             </View>
           )}
         </View>
@@ -229,7 +225,11 @@ const styles = StyleSheet.create({
   commitmentCopy: { flex: 1 },
   commitmentTitle: { color: '#EAE7E3', fontSize: 13, fontWeight: '700' },
   commitmentMeta: { color: '#707070', fontSize: 10, marginTop: 4 },
-  commitmentDue: { color: '#8B8B8B', fontSize: 10, fontWeight: '700' },
+  commitmentDue: { color: '#8B8B8B', fontSize: 10, fontWeight: '700', marginLeft: 10 },
+  completeButton: { alignItems: 'center', height: 34, justifyContent: 'center', marginLeft: 8, width: 34 },
+  completeRing: { borderColor: '#5A5A5A', borderRadius: 9, borderWidth: 1, height: 18, position: 'relative', width: 18 },
+  completeTickA: { backgroundColor: '#B9C8BD', height: 1.4, left: 4, position: 'absolute', top: 9, transform: [{ rotate: '42deg' }], width: 5 },
+  completeTickB: { backgroundColor: '#B9C8BD', height: 1.4, left: 7, position: 'absolute', top: 7, transform: [{ rotate: '-48deg' }], width: 8 },
   detailOverlay: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.72)', flex: 1, justifyContent: 'center', padding: 18 },
   detailCard: { backgroundColor: '#101010', borderColor: '#393939', borderRadius: 18, borderWidth: 1, maxWidth: 430, padding: 18, width: '100%' },
   detailTitle: { color: '#F3F0EC', flex: 1, fontSize: 18, fontWeight: '800' },
@@ -237,4 +237,6 @@ const styles = StyleSheet.create({
   detailItem: { flex: 1, minWidth: 125 },
   detailLabel: { color: '#747474', fontSize: 9, fontWeight: '700', letterSpacing: 0.6, marginBottom: 4, textTransform: 'uppercase' },
   detailValue: { color: '#E7E4E0', fontSize: 13, fontWeight: '600' },
+  completeAction: { alignItems: 'center', borderColor: '#3A3A3A', borderRadius: 10, borderWidth: 1, marginTop: 18, paddingVertical: 12 },
+  completeActionText: { color: '#DAD7D2', fontSize: 11, fontWeight: '800' },
 });
