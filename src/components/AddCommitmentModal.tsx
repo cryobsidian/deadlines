@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { OptionPickerSheet } from '@/components/OptionPickerSheet';
-import { addDays, startOfDay } from '@/domain/workload';
+import { addDays } from '@/domain/workload';
 import type { Commitment, CommitmentCategory, CommitmentDifficulty, CommitmentFlexibility, CommitmentPriority } from '@/types/commitment';
 
 const categoryOptions = ['university', 'work', 'health', 'personal', 'social'].map((value) => ({ label: titleCase(value), value: value as CommitmentCategory }));
@@ -19,14 +19,22 @@ type Props = {
   onAdd: (commitment: Commitment) => void;
 };
 
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
+  const defaultDueDate = toDateInputValue(addDays(now, 3));
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CommitmentCategory>('university');
   const [priority, setPriority] = useState<CommitmentPriority>('medium');
   const [difficulty, setDifficulty] = useState<CommitmentDifficulty>(2);
   const [flexibility, setFlexibility] = useState<CommitmentFlexibility>('flexible');
-  const [dueInDays, setDueInDays] = useState('3');
-  const [dueHour, setDueHour] = useState('18');
+  const [dueDate, setDueDate] = useState(defaultDueDate);
+  const [dueTime, setDueTime] = useState('18:00');
   const [advanced, setAdvanced] = useState(false);
   const [picker, setPicker] = useState<Picker>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +45,8 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
     setPriority('medium');
     setDifficulty(2);
     setFlexibility('flexible');
-    setDueInDays('3');
-    setDueHour('18');
+    setDueDate(toDateInputValue(addDays(now, 3)));
+    setDueTime('18:00');
     setAdvanced(false);
     setPicker(null);
     setError(null);
@@ -52,13 +60,20 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
   function submit() {
     const trimmed = title.trim();
     if (!trimmed) return setError('Title is required');
-    const days = Number.parseInt(dueInDays, 10);
-    const hour = Number.parseInt(dueHour, 10);
-    if (Number.isNaN(days) || days < 0 || days > 60) return setError('Due in days must be 0–60');
-    if (Number.isNaN(hour) || hour < 0 || hour > 23) return setError('Due hour must be 0–23');
 
-    const due = addDays(startOfDay(now), days);
-    due.setHours(hour, 0, 0, 0);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return setError('Use date format YYYY-MM-DD');
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(dueTime)) return setError('Use time format HH:MM');
+
+    const [year, month, day] = dueDate.split('-').map(Number);
+    const [hour, minute] = dueTime.split(':').map(Number);
+    const due = new Date(year, month - 1, day, hour, minute, 0, 0);
+
+    if (
+      due.getFullYear() !== year ||
+      due.getMonth() !== month - 1 ||
+      due.getDate() !== day
+    ) return setError('Enter a valid due date');
+
     if (due.getTime() <= now.getTime()) return setError('Due date must be after now');
 
     onAdd({
@@ -91,8 +106,28 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
 
               <Text style={styles.label}>Due</Text>
               <View style={styles.row}>
-                <View style={styles.field}><TextInput inputMode="numeric" keyboardType="number-pad" onChangeText={(value) => setDueInDays(value.replace(/[^0-9]/g, ''))} style={styles.input} value={dueInDays} /><Text style={styles.hint}>days from now</Text></View>
-                <View style={styles.field}><TextInput inputMode="numeric" keyboardType="number-pad" onChangeText={(value) => setDueHour(value.replace(/[^0-9]/g, ''))} style={styles.input} value={dueHour} /><Text style={styles.hint}>24h time</Text></View>
+                <View style={[styles.field, styles.dateField]}>
+                  <TextInput
+                    autoCapitalize="none"
+                    onChangeText={(value) => { setDueDate(value.replace(/[^0-9-]/g, '').slice(0, 10)); setError(null); }}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#6E6E6E"
+                    style={styles.input}
+                    value={dueDate}
+                  />
+                  <Text style={styles.hint}>date</Text>
+                </View>
+                <View style={styles.timeField}>
+                  <TextInput
+                    autoCapitalize="none"
+                    onChangeText={(value) => { setDueTime(value.replace(/[^0-9:]/g, '').slice(0, 5)); setError(null); }}
+                    placeholder="18:00"
+                    placeholderTextColor="#6E6E6E"
+                    style={styles.input}
+                    value={dueTime}
+                  />
+                  <Text style={styles.hint}>time</Text>
+                </View>
               </View>
 
               <SettingRow label="Category" value={titleCase(category)} onPress={() => setPicker('category')} />
@@ -142,6 +177,8 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#171717', borderColor: '#3C3C3C', borderRadius: 10, borderWidth: 1, color: '#F4F1ED', fontSize: 14, paddingHorizontal: 12, paddingVertical: 11 },
   row: { flexDirection: 'row', gap: 10 },
   field: { flex: 1 },
+  dateField: { flex: 1.45 },
+  timeField: { flex: 0.8 },
   hint: { color: '#666', fontSize: 9, marginTop: 5 },
   setting: { alignItems: 'center', borderBottomColor: '#252525', borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 48, paddingVertical: 8 },
   settingLabel: { color: '#D7D4D0', fontSize: 12.5, fontWeight: '600' },
