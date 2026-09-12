@@ -23,6 +23,8 @@ function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: n
 
 export function CommitmentLane({ commitment, now, windowStart, windowEnd, height, topInset, activeCount, range, onPressLine }: Props) {
   const status = getCommitmentStatus(commitment, now);
+  if (status === 'completed') return null;
+
   const startY = getDropTrackY(new Date(commitment.startAt), windowStart, windowEnd, height, topInset);
   const dueY = getDropTrackY(new Date(commitment.dueAt), windowStart, windowEnd, height, topInset);
   const currentY = getDropTrackY(now, windowStart, windowEnd, height, topInset);
