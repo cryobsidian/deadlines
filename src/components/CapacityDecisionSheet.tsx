@@ -15,8 +15,8 @@ function capacityLabel(capacity: DailyCapacity) {
   return 'Okay';
 }
 
-function bandLabel(score: number) {
-  const band = getWorkloadBand(score);
+function bandLabel(score: number, date: Date) {
+  const band = getWorkloadBand(score, date);
   if (band === 'overloaded') return 'OVERLOADED';
   if (band === 'strained') return 'STRAINED';
   if (band === 'busy') return 'BUSY';
@@ -42,7 +42,6 @@ function findRebalanceCandidate(commitments: Commitment[], now: Date) {
 }
 
 function findRecoveryWindow(commitments: Commitment[], now: Date) {
-  const thresholds = getCapacityThresholds();
   const pressureEnd = identifyOverloadPeriods(commitments, now, addHours(now, 24 * 7))[0]?.end ?? now;
   let cursor = addHours(pressureEnd > now ? pressureEnd : now, 3);
   const end = addHours(now, 24 * 7);
@@ -50,9 +49,13 @@ function findRecoveryWindow(commitments: Commitment[], now: Date) {
   while (cursor < end) {
     const middle = addHours(cursor, 1.5);
     const windowEnd = addHours(cursor, 3);
-    const scores = [cursor, middle, windowEnd].map((point) => calculateWorkloadScore(commitments, point));
+    const points = [cursor, middle, windowEnd];
+    const staysBelowBusy = points.every((point) => {
+      const score = calculateWorkloadScore(commitments, point);
+      return score < getCapacityThresholds(undefined, point).busy;
+    });
     const hardPriority = commitments.some((item) => isCommitmentActiveOn(item, middle) && (item.priority === 'critical' || item.priority === 'high') && item.difficulty >= 2);
-    if (Math.max(...scores) < thresholds.busy && !hardPriority) return { start: cursor, end: windowEnd };
+    if (staysBelowBusy && !hardPriority) return { start: cursor, end: windowEnd };
     cursor = addHours(cursor, 3);
   }
   return null;
@@ -76,11 +79,15 @@ export function CapacityDecisionSheet({ commitments, capacity, now, visible, onC
 }) {
   const [protectedWindow, setProtectedWindow] = useState<string | null>(null);
   const score = calculateWorkloadScore(commitments, now);
-  const thresholds = getCapacityThresholds();
-  const band = getWorkloadBand(score);
+  const thresholds = getCapacityThresholds(undefined, now);
+  const band = getWorkloadBand(score, now);
   const candidate = useMemo(() => findRebalanceCandidate(commitments, now), [commitments, now]);
   const recovery = useMemo(() => findRecoveryWindow(commitments, now), [commitments, now, capacity]);
-  const note = capacity === 'low' ? `Lower capacity today: strain begins at ${thresholds.strained}.` : capacity === 'okay' ? 'Today has a little less room than a high-capacity day.' : 'Current workload is within a higher-capacity day.';
+  const note = capacity === 'low'
+    ? `Lower capacity today: strain begins at ${thresholds.strained}. Future days still use the normal forecast.`
+    : capacity === 'okay'
+      ? `Today's check-in affects today only. Future days keep the normal forecast.`
+      : `Today is at normal capacity. Future days keep the normal forecast.`;
 
   function protectRecovery() {
     if (!recovery) return;
@@ -96,7 +103,7 @@ export function CapacityDecisionSheet({ commitments, capacity, now, visible, onC
           <View style={styles.grabber} />
           <View style={styles.header}>
             <View><Text style={styles.eyebrow}>TODAY'S DECISION</Text><Text style={styles.title}>{capacityLabel(capacity)} capacity</Text></View>
-            <View style={[styles.bandBadge, band === 'strained' && styles.bandWarm, band === 'overloaded' && styles.bandHot]}><Text style={styles.bandText}>{bandLabel(score)}</Text></View>
+            <View style={[styles.bandBadge, band === 'strained' && styles.bandWarm, band === 'overloaded' && styles.bandHot]}><Text style={styles.bandText}>{bandLabel(score, now)}</Text></View>
           </View>
 
           <View style={styles.summary}><Text style={styles.score}>{score}</Text><View style={styles.summaryCopy}><Text style={styles.summaryTitle}>current workload points</Text><Text style={styles.summaryText}>{note}</Text></View></View>
@@ -112,7 +119,7 @@ export function CapacityDecisionSheet({ commitments, capacity, now, visible, onC
           {recovery ? (
             <View style={styles.recoveryBox}>
               <View style={styles.recoveryHeader}><View><Text style={styles.sectionLabel}>RECOVERY WINDOW</Text><Text style={styles.recoveryTime}>{formatWindow(recovery.start, recovery.end)}</Text></View><Text style={styles.recoveryMark}>○</Text></View>
-              <Text style={styles.actionText}>First stable three-hour window after the nearest pressure period, with low predicted load and no hard high-priority commitment.</Text>
+              <Text style={styles.actionText}>First stable three-hour window after the nearest pressure period, using the normal forecast for future days.</Text>
               <Pressable onPress={protectRecovery} style={[styles.secondaryButton, protectedWindow && styles.secondaryButtonActive]}><Text style={styles.secondaryButtonText}>{protectedWindow ? 'Recovery protected' : 'Protect this time'}</Text></Pressable>
               {protectedWindow ? <Text style={styles.protectedText}>Future rebalancing should avoid filling this window.</Text> : null}
             </View>
