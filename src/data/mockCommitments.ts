@@ -17,6 +17,9 @@ export function createMockCommitments(now = new Date()): Commitment[] {
       startAt: addDays(today, -2).toISOString(),
       dueAt: atHour(addDays(today, 3), 18).toISOString(),
       difficulty: 3,
+      priority: 'high',
+      flexibility: 'flexible',
+      category: 'university',
     },
     {
       id: 'prototype',
@@ -24,6 +27,9 @@ export function createMockCommitments(now = new Date()): Commitment[] {
       startAt: addDays(today, -1).toISOString(),
       dueAt: atHour(addDays(today, 4), 16).toISOString(),
       difficulty: 3,
+      priority: 'critical',
+      flexibility: 'flexible',
+      category: 'university',
     },
     {
       id: 'exam',
@@ -31,6 +37,9 @@ export function createMockCommitments(now = new Date()): Commitment[] {
       startAt: atHour(today, 10).toISOString(),
       dueAt: atHour(addDays(today, 4), 20).toISOString(),
       difficulty: 2,
+      priority: 'critical',
+      flexibility: 'fixed',
+      category: 'university',
     },
     {
       id: 'journal',
@@ -38,6 +47,9 @@ export function createMockCommitments(now = new Date()): Commitment[] {
       startAt: addDays(today, 2).toISOString(),
       dueAt: atHour(addDays(today, 5), 12).toISOString(),
       difficulty: 1,
+      priority: 'medium',
+      flexibility: 'droppable',
+      category: 'personal',
     },
     {
       id: 'pitch',
@@ -45,6 +57,9 @@ export function createMockCommitments(now = new Date()): Commitment[] {
       startAt: addDays(today, 3).toISOString(),
       dueAt: atHour(addDays(today, 5), 18).toISOString(),
       difficulty: 2,
+      priority: 'high',
+      flexibility: 'flexible',
+      category: 'university',
     },
     {
       id: 'market',
@@ -52,6 +67,9 @@ export function createMockCommitments(now = new Date()): Commitment[] {
       startAt: addDays(today, 6).toISOString(),
       dueAt: atHour(addDays(today, 12), 12).toISOString(),
       difficulty: 2,
+      priority: 'medium',
+      flexibility: 'flexible',
+      category: 'university',
     },
   ];
 }
