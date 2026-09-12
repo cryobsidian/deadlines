@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { timelineTheme } from '@/constants/theme';
 
@@ -9,123 +8,106 @@ type Props = {
 };
 
 export function Runner({ scale = 1, fatigue = 0 }: Props) {
-  const motion = useRef(new Animated.Value(0)).current;
-  const clampedFatigue = Math.max(0, Math.min(fatigue, 6));
-
-  useEffect(() => {
-    motion.setValue(0);
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(motion, {
-          duration: 900 + clampedFatigue * 120,
-          toValue: 1,
-          useNativeDriver: true,
-        }),
-        Animated.timing(motion, {
-          duration: 900 + clampedFatigue * 120,
-          toValue: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    animation.start();
-    return () => animation.stop();
-  }, [clampedFatigue, motion]);
-
-  // Deliberately subtle: the character should feel alive, not bounce like a game sprite.
-  const lift = motion.interpolate({ inputRange: [0, 1], outputRange: [0, -0.7] });
-  const armShift = motion.interpolate({ inputRange: [0, 1], outputRange: ['-5deg', '5deg'] });
-  const legShift = motion.interpolate({ inputRange: [0, 1], outputRange: ['5deg', '-5deg'] });
-  const fatigueLean = Math.min(10, clampedFatigue * 1.4);
-  const opacity = Math.max(0.52, 0.94 - clampedFatigue * 0.055);
+  const tired = fatigue >= 4;
+  const exhausted = fatigue >= 6;
+  const opacity = exhausted ? 0.5 : tired ? 0.72 : 0.94;
+  const lean = exhausted ? '22deg' : tired ? '13deg' : '-5deg';
 
   return (
-    <Animated.View
-      style={[
-        styles.runner,
-        {
-          opacity,
-          transform: [{ scale }, { translateY: lift }],
-        },
-      ]}>
-      <View style={[styles.body, { transform: [{ rotate: `${fatigueLean}deg` }] }]}>
+    <View style={[styles.runner, { opacity, transform: [{ scale }] }]}>
+      <View style={[styles.figure, { transform: [{ rotate: lean }] }]}>
         <View style={styles.head} />
         <View style={styles.torso} />
-        <Animated.View style={[styles.limb, styles.armBack, { transform: [{ rotate: armShift }] }]} />
-        <Animated.View style={[styles.limb, styles.armFront, { transform: [{ rotate: armShift }] }]} />
-        <Animated.View style={[styles.limb, styles.legBack, { transform: [{ rotate: legShift }] }]} />
-        <Animated.View style={[styles.limb, styles.legFront, { transform: [{ rotate: legShift }] }]} />
+        <View style={[styles.arm, styles.armRear, tired && styles.armRearTired]} />
+        <View style={[styles.arm, styles.armFront, tired && styles.armFrontTired]} />
+        <View style={[styles.leg, styles.legRear, exhausted && styles.legRearExhausted]} />
+        <View style={[styles.leg, styles.legFront, exhausted && styles.legFrontExhausted]} />
       </View>
-      <View style={styles.shadow} />
-    </Animated.View>
+      <View style={styles.ground} />
+    </View>
   );
 }
 
-const lineColor = timelineTheme.colors.active;
+const ink = timelineTheme.colors.active;
 
 const styles = StyleSheet.create({
   runner: {
     alignItems: 'center',
-    height: 40,
+    height: 46,
     justifyContent: 'flex-end',
     width: 34,
   },
-  body: {
-    height: 34,
+  figure: {
+    height: 39,
     position: 'relative',
-    width: 26,
+    width: 28,
   },
   head: {
-    backgroundColor: lineColor,
-    borderRadius: 4,
+    backgroundColor: ink,
+    borderRadius: 5,
     height: 7,
-    left: 15,
+    left: 17,
     position: 'absolute',
     top: 1,
     width: 7,
   },
   torso: {
-    backgroundColor: lineColor,
+    backgroundColor: ink,
     borderRadius: 999,
-    height: 15,
-    left: 12,
+    height: 17,
+    left: 14,
     position: 'absolute',
     top: 8,
-    width: 1.6,
+    transform: [{ rotate: '8deg' }],
+    width: 2,
   },
-  limb: {
-    backgroundColor: lineColor,
+  arm: {
+    backgroundColor: ink,
     borderRadius: 999,
+    height: 15,
     position: 'absolute',
-    width: 1.4,
-  },
-  armBack: {
-    height: 12,
-    left: 10,
     top: 10,
+    width: 1.8,
+  },
+  armRear: {
+    left: 12,
+    transform: [{ rotate: '42deg' }],
   },
   armFront: {
-    height: 12,
-    left: 15,
-    top: 10,
+    left: 17,
+    transform: [{ rotate: '-48deg' }],
   },
-  legBack: {
-    height: 14,
-    left: 10,
-    top: 21,
+  armRearTired: {
+    transform: [{ rotate: '18deg' }],
+  },
+  armFrontTired: {
+    transform: [{ rotate: '-18deg' }],
+  },
+  leg: {
+    backgroundColor: ink,
+    borderRadius: 999,
+    height: 18,
+    position: 'absolute',
+    top: 23,
+    width: 2,
+  },
+  legRear: {
+    left: 12,
+    transform: [{ rotate: '34deg' }],
   },
   legFront: {
-    height: 14,
-    left: 15,
-    top: 21,
+    left: 17,
+    transform: [{ rotate: '-38deg' }],
   },
-  shadow: {
-    backgroundColor: lineColor,
-    borderRadius: 999,
+  legRearExhausted: {
+    transform: [{ rotate: '18deg' }],
+  },
+  legFrontExhausted: {
+    transform: [{ rotate: '-18deg' }],
+  },
+  ground: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
     height: 1,
-    marginTop: 1,
-    opacity: 0.14,
-    width: 17,
+    width: 26,
   },
 });
