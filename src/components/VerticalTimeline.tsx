@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CommitmentLane } from '@/components/CommitmentLane';
+import { Runner } from '@/components/Runner';
 import {
   calculateWorkloadScore,
   getCommitmentStatus,
@@ -92,6 +93,13 @@ function workloadCopy(band: WorkloadBand) {
   return 'MANAGEABLE';
 }
 
+function runnerFatigue(band: WorkloadBand) {
+  if (band === 'overloaded') return 7;
+  if (band === 'strained') return 5;
+  if (band === 'busy') return 3;
+  return 1;
+}
+
 function suggestedMove(candidate: Commitment, period: OverloadPeriod) {
   const duration = new Date(candidate.dueAt).getTime() - new Date(candidate.startAt).getTime();
   const newDueMs = period.start.getTime() - 2 * HOUR_MS;
@@ -115,6 +123,8 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
   const timelineHeight = Math.max(1, laneFieldSize.height);
   const contentTopInset = getTopContentInset(timelineHeight);
   const contentHeight = Math.max(1, timelineHeight - contentTopInset);
+  const currentY = contentTopInset + (1 - getTimePosition(now, windowStart, windowEnd)) * contentHeight;
+  const runnerTop = clamp(currentY - 43, contentTopInset + 42, timelineHeight - 70);
 
   const pressureItems = pressureSelection ? getPressureCommitments(commitments, pressureSelection) : [];
   const rebalanceCandidate = getRebalanceCandidate(pressureItems);
@@ -200,6 +210,11 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
               windowStart={windowStart}
             />
           ))}
+
+          <View pointerEvents="none" style={[styles.userRunner, { top: runnerTop }]}>
+            <Text style={styles.youLabel}>YOU</Text>
+            <Runner fatigue={runnerFatigue(currentBand)} scale={0.88} />
+          </View>
         </View>
       </View>
 
@@ -313,6 +328,8 @@ const styles = StyleSheet.create({
   statusDotStrained: { backgroundColor: '#F39A84' },
   statusDotOverloaded: { backgroundColor: '#FF6F61' },
   statusReadoutText: { color: '#A5A5A5', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.8 },
+  userRunner: { alignItems: 'center', left: 7, position: 'absolute', width: 44, zIndex: 18 },
+  youLabel: { color: '#7F7F7F', fontSize: 7, fontWeight: '800', letterSpacing: 1.2, marginBottom: -2 },
   overloadRegion: { alignItems: 'flex-end', backgroundColor: 'rgba(207,103,82,0.055)', borderLeftColor: 'rgba(232,133,112,0.3)', borderLeftWidth: 1, borderRightColor: 'rgba(232,133,112,0.3)', borderRightWidth: 1, justifyContent: 'flex-start', left: 0, paddingRight: 7, paddingTop: 7, position: 'absolute', right: 0, zIndex: 2 },
   pressureLabel: { color: '#D98673', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.75, opacity: 0.86 },
   modalOverlay: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.76)', flex: 1, justifyContent: 'center', padding: 18 },
