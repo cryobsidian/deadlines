@@ -41,17 +41,16 @@ export function CommitmentLane({
   const activeTop = Math.min(dueY, currentY);
   const activeBottom = Math.max(dueY, currentY);
 
-  // Keep difficulty visible, but use a restrained visual scale instead of thick bars.
-  const lineWidth = commitment.difficulty === 1 ? 1.25 : commitment.difficulty === 2 ? 1.75 : 2.4;
+  const lineWidth = commitment.difficulty === 1 ? 1 : commitment.difficulty === 2 ? 1.35 : 1.75;
   const showRunner = status === 'active' || status === 'overdue';
-  const runnerScale = Math.max(0.68, 0.94 - Math.max(0, activeCount - 1) * 0.045 - commitment.difficulty * 0.018);
+  const runnerScale = Math.max(0.72, 0.9 - Math.max(0, activeCount - 1) * 0.035 - commitment.difficulty * 0.012);
   const lineHitSlop = { bottom: 10, left: 14, right: 14, top: 10 };
 
   const timelineHeight = height + topInset;
-  const RUNNER_SLOT_H = 52;
-  const RUNNER_BOTTOM = 10;
-  const HEAD_OFFSET_FROM_SLOT_TOP = 8;
-  const GAP_ABOVE_HEAD = 11;
+  const RUNNER_SLOT_H = 40;
+  const RUNNER_BOTTOM = 11;
+  const HEAD_OFFSET_FROM_SLOT_TOP = 6;
+  const GAP_ABOVE_HEAD = 9;
   const maxBarBottom = timelineHeight - RUNNER_SLOT_H - RUNNER_BOTTOM + HEAD_OFFSET_FROM_SLOT_TOP - GAP_ABOVE_HEAD;
   const clampedFutureBottom = showRunner ? Math.min(futureBottom, maxBarBottom) : futureBottom;
   const clampedActiveBottom = showRunner ? Math.min(activeBottom, maxBarBottom) : activeBottom;
@@ -61,13 +60,14 @@ export function CommitmentLane({
   let titleTop: number;
   let titleWrapStyle: object;
   let titleStyle: object = {};
+
   if (isDay) {
     const barTop = status !== 'future' ? activeTop : futureTop;
     const barBottom = status !== 'future' ? clampedActiveBottom : clampedFutureBottom;
     const barMid = (barTop + barBottom) / 2;
-    const rawDayTop = barMid - 7;
-    titleTop = Math.max(minVisibleTop, Math.min(rawDayTop, timelineHeight - 22));
-    const gap = 9;
+    const rawDayTop = barMid - 6;
+    titleTop = Math.max(minVisibleTop, Math.min(rawDayTop, timelineHeight - 20));
+    const gap = 8;
     titleWrapStyle = {
       top: titleTop,
       left: '50%' as const,
@@ -77,8 +77,8 @@ export function CommitmentLane({
     };
     titleStyle = { textAlign: 'left' as const };
   } else {
-    const rawTitleTop = dueY - 31;
-    const tTop = Math.max(6, Math.min(rawTitleTop, height + topInset - 30));
+    const rawTitleTop = dueY - 24;
+    const tTop = Math.max(6, Math.min(rawTitleTop, height + topInset - 24));
     titleTop = rawTitleTop < minVisibleTop ? minVisibleTop : tTop;
     titleWrapStyle = { top: titleTop, left: 2, right: 2, alignItems: 'center' as const };
     titleStyle = { textAlign: 'center' as const };
@@ -90,7 +90,10 @@ export function CommitmentLane({
         hitSlop={lineHitSlop}
         onPress={() => onPressLine(commitment)}
         style={[styles.titleWrap, titleWrapStyle]}>
-        <Text numberOfLines={2} style={[styles.title, titleStyle]}>
+        <Text
+          ellipsizeMode="tail"
+          numberOfLines={isDay ? 2 : 1}
+          style={[styles.title, titleStyle]}>
           {commitment.title}
         </Text>
       </Pressable>
@@ -130,17 +133,17 @@ export function CommitmentLane({
         style={[
           styles.deadline,
           {
-            borderColor: status === 'future' ? timelineTheme.colors.future : timelineTheme.colors.active,
+            borderColor: status === 'future' ? timelineTheme.colors.future : '#DADADA',
             left: '50%',
-            marginLeft: -4.5,
-            top: Math.max(0, dueY - 4.5),
+            marginLeft: -3.75,
+            top: Math.max(0, dueY - 3.75),
           },
         ]}
       />
       {showRunner && (
         <View
           pointerEvents="none"
-          style={[styles.runnerSlot, { bottom: 10, left: '50%', marginLeft: -24 }]}>
+          style={[styles.runnerSlot, { bottom: 11, left: '50%', marginLeft: -17 }]}>
           <Runner fatigue={activeCount} scale={runnerScale} />
         </View>
       )}
@@ -163,28 +166,28 @@ const styles = StyleSheet.create({
     zIndex: 4,
   },
   futureLine: {
-    backgroundColor: '#464646',
-    opacity: 0.66,
+    backgroundColor: '#3A3A3A',
+    opacity: 0.58,
   },
   activeLine: {
-    backgroundColor: '#EAEAEA',
-    opacity: 0.92,
+    backgroundColor: '#DCDCDC',
+    opacity: 0.88,
     zIndex: 6,
   },
   deadline: {
     backgroundColor: timelineTheme.colors.background,
-    borderRadius: 5,
-    borderWidth: 1.25,
-    height: 9,
+    borderRadius: 4,
+    borderWidth: 1,
+    height: 7.5,
     position: 'absolute',
-    width: 9,
+    width: 7.5,
     zIndex: 7,
   },
   runnerSlot: {
     alignItems: 'center',
-    height: 52,
+    height: 40,
     position: 'absolute',
-    width: 48,
+    width: 34,
     zIndex: 1,
   },
   titleWrap: {
@@ -195,11 +198,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   title: {
-    color: '#ECECEC',
-    fontSize: 11.5,
-    fontWeight: '600',
-    letterSpacing: 0.15,
-    lineHeight: 13,
+    color: '#D8D8D8',
+    fontSize: 10.25,
+    fontWeight: '500',
+    letterSpacing: 0.05,
+    lineHeight: 12,
     textAlign: 'center',
   },
 });
