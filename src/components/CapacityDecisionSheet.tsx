@@ -7,7 +7,6 @@ import {
   calculateWorkloadScore,
   getCapacityThresholds,
   getWorkloadBand,
-  isCommitmentActiveOn,
 } from '@/domain/workload';
 import type { Commitment, CommitmentPriority } from '@/types/commitment';
 
@@ -55,9 +54,11 @@ function findRecoveryWindow(commitments: Commitment[], now: Date) {
     const windowEnd = addHours(cursor, 3);
     const midpoint = addHours(cursor, 1.5);
     const score = calculateWorkloadScore(commitments, midpoint);
-    const active = commitments.some((item) => isCommitmentActiveOn(item, midpoint));
 
-    if (score < thresholds.busy && !active) {
+    // Commitments can span several days, so "active" does not mean the user is
+    // literally working every minute. A recovery opportunity is therefore a
+    // low-load window, not a requirement for zero active commitments.
+    if (score < thresholds.busy) {
       return { start: cursor, end: windowEnd };
     }
     cursor = addHours(cursor, 3);
@@ -157,7 +158,7 @@ export function CapacityDecisionSheet({
                 </View>
                 <Text style={styles.recoveryMark}>○</Text>
               </View>
-              <Text style={styles.actionText}>This is the first three-hour window with no active commitment and load below your busy threshold.</Text>
+              <Text style={styles.actionText}>This is the first three-hour period where your predicted load stays below today's busy threshold.</Text>
               <Pressable
                 onPress={() => setProtectedWindow(formatWindow(recovery.start, recovery.end))}
                 style={[styles.secondaryButton, protectedWindow && styles.secondaryButtonActive]}>
