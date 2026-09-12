@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CommitmentLane } from '@/components/CommitmentLane';
 import { timelineTheme } from '@/constants/theme';
@@ -13,8 +13,6 @@ import {
 import type { Commitment, TimeRange } from '@/types/commitment';
 
 const fallbackTimelineHeight = 520;
-const infoPanelWidth = 212;
-const infoPanelHeight = 116;
 
 type Props = {
   commitments: Commitment[];
@@ -24,11 +22,7 @@ type Props = {
   windowEnd: Date;
 };
 
-type Selection = {
-  commitment: Commitment;
-  laneIndex: number;
-  anchorY: number;
-};
+type Selection = Commitment;
 
 function formatTick(date: Date, range: TimeRange, now: Date) {
   if (range === 'day') {
@@ -43,12 +37,27 @@ function formatTick(date: Date, range: TimeRange, now: Date) {
   return `${date.toLocaleString(undefined, { month: 'short' }).toUpperCase()} ${date.getDate()}`;
 }
 
-function formatDateTime(value: string) {
+function formatFullDateTime(value: string) {
   const date = new Date(value);
-  return `${date.toLocaleString(undefined, { month: 'short' })} ${date.getDate()}, ${date.toLocaleTimeString(undefined, {
+  return date.toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  })}`;
+  });
+}
+
+function getDurationLabel(startAt: string, dueAt: string) {
+  const ms = new Date(dueAt).getTime() - new Date(startAt).getTime();
+  const days = Math.round(ms / (1000 * 60 * 60 * 24));
+  if (days <= 0) return 'Less than a day';
+  return `${days} day${days === 1 ? '' : 's'}`;
+}
+
+function getStatusLabel(commitment: Commitment, now: Date) {
+  return getCommitmentStatus(commitment, now);
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -69,11 +78,6 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
   const timelineHeight = Math.max(1, laneFieldSize.height);
   const contentTopInset = getTopContentInset(timelineHeight);
   const contentHeight = Math.max(1, timelineHeight - contentTopInset);
-  const laneWidth = laneFieldSize.width > 0 ? laneFieldSize.width / commitments.length : 0;
-  const panelLeft = selection
-    ? clamp(selection.laneIndex * laneWidth + laneWidth * 0.58, 8, Math.max(8, laneFieldSize.width - infoPanelWidth - 8))
-    : 0;
-  const panelTop = selection ? clamp(selection.anchorY - 20, contentTopInset, timelineHeight - infoPanelHeight - 8) : 0;
 
   return (
     <View style={styles.outer}>
@@ -125,32 +129,89 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
               />
             );
           })}
-          {commitments.map((commitment, index) => (
+          {commitments.map((commitment) => (
             <CommitmentLane
               activeCount={activeCount}
               commitment={commitment}
               height={contentHeight}
               key={commitment.id}
               now={now}
-              onPressLine={(pressedCommitment, anchorY) =>
-                setSelection({ commitment: pressedCommitment, laneIndex: index, anchorY })
-              }
+              onPressLine={(pressedCommitment) => setSelection(pressedCommitment)}
               topInset={contentTopInset}
               windowEnd={windowEnd}
               windowStart={windowStart}
             />
           ))}
-
-          {selection && (
-            <Pressable style={[styles.infoPanel, { left: panelLeft, top: panelTop }]}>
-              <Text style={styles.infoTitle}>{selection.commitment.title}</Text>
-              <Text style={styles.infoText}>Starts {formatDateTime(selection.commitment.startAt)}</Text>
-              <Text style={styles.infoText}>Due {formatDateTime(selection.commitment.dueAt)}</Text>
-              <Text style={styles.infoText}>Difficulty {selection.commitment.difficulty}</Text>
-            </Pressable>
-          )}
         </View>
       </View>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setSelection(null)}
+        statusBarTranslucent
+        transparent
+        visible={!!selection}>
+        <View style={styles.modalOverlay}>
+          <Pressable onPress={() => setSelection(null)} style={styles.modalBackdrop} />
+          {selection && (
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{selection.title}</Text>
+                {(() => {
+                  const s = getStatusLabel(selection, now);
+                  return (
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        s === 'active' && styles.statusActive,
+                        s === 'overdue' && styles.statusOverdue,
+                        s === 'future' && styles.statusFuture,
+                        s === 'completed' && styles.statusCompleted,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.statusText,
+                          s === 'active' && styles.statusTextActive,
+                          s === 'overdue' && styles.statusTextLight,
+                          s === 'completed' && styles.statusTextLight,
+                        ]}>
+                        {s.toUpperCase()}
+                      </Text>
+                    </View>
+                  );
+                })()}
+              </View>
+
+              <View style={styles.detailGrid}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Starts</Text>
+                  <Text style={styles.detailValue}>{formatFullDateTime(selection.startAt)}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Due</Text>
+                  <Text style={styles.detailValue}>{formatFullDateTime(selection.dueAt)}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Duration</Text>
+                  <Text style={styles.detailValue}>{getDurationLabel(selection.startAt, selection.dueAt)}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Difficulty</Text>
+                  <View style={styles.difficultyPill}>
+                    <Text style={styles.difficultyPillText}>
+                      {selection.difficulty === 1 ? 'Easy' : selection.difficulty === 2 ? 'Medium' : 'Hard'} · {selection.difficulty}/3
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <Pressable onPress={() => setSelection(null)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Close</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -258,29 +319,118 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1,
   },
-  infoPanel: {
-    backgroundColor: timelineTheme.colors.panel,
+  modalOverlay: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.62)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalBackdrop: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  modalCard: {
+    backgroundColor: '#121212',
+    borderColor: timelineTheme.colors.outline,
+    borderRadius: 16,
+    borderWidth: 1,
+    maxWidth: 420,
+    padding: 18,
+    width: '100%',
+  },
+  modalHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+  },
+  modalTitle: {
+    color: timelineTheme.colors.text,
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '800',
+    lineHeight: 22,
+  },
+  statusBadge: {
+    backgroundColor: '#2A2A2A',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  statusActive: {
+    backgroundColor: '#F5F5F5',
+  },
+  statusOverdue: {
+    backgroundColor: '#FF4D4D',
+  },
+  statusFuture: {
+    backgroundColor: '#3A3A3A',
+  },
+  statusCompleted: {
+    backgroundColor: '#2E7D32',
+  },
+  statusText: {
+    color: timelineTheme.colors.mutedText,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  statusTextActive: {
+    color: '#111111',
+  },
+  statusTextLight: {
+    color: '#FFFFFF',
+  },
+  detailGrid: {
+    gap: 12,
+    marginTop: 16,
+  },
+  detailRow: {
+    gap: 4,
+  },
+  detailLabel: {
+    color: timelineTheme.colors.mutedText,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  detailValue: {
+    color: timelineTheme.colors.text,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  difficultyPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1A1A1A',
     borderColor: timelineTheme.colors.outline,
     borderRadius: 8,
     borderWidth: 1,
-    minHeight: infoPanelHeight,
-    padding: 12,
-    position: 'absolute',
-    width: infoPanelWidth,
-    zIndex: 20,
-  },
-  infoTitle: {
-    color: timelineTheme.colors.text,
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0,
-    marginBottom: 4,
-  },
-  infoText: {
-    color: timelineTheme.colors.mutedText,
-    fontSize: 12,
-    letterSpacing: 0,
     marginTop: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  difficultyPillText: {
+    color: timelineTheme.colors.text,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  closeButton: {
+    alignItems: 'center',
+    backgroundColor: timelineTheme.colors.text,
+    borderRadius: 12,
+    marginTop: 18,
+    paddingVertical: 12,
+  },
+  closeButtonText: {
+    color: '#111111',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });
 
