@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddCommitmentModal } from '@/components/AddCommitmentModal';
 import { CapacityCheckIn, CapacityPill, type DailyCapacity } from '@/components/CapacityCheckIn';
+import { CapacityDecisionSheet } from '@/components/CapacityDecisionSheet';
 import { TimeScaleSelector } from '@/components/TimeScaleSelector';
 import { VerticalTimeline } from '@/components/VerticalTimeline';
 import { WorkspaceSheet, type WorkspacePage } from '@/components/WorkspaceSheet';
@@ -36,18 +37,33 @@ export default function HomeScreen() {
   const [selected, setSelected] = useState<Commitment | null>(null);
   const [capacity, setCapacity] = useState<DailyCapacity>('okay');
   const [showCapacity, setShowCapacity] = useState(false);
+  const [showDecision, setShowDecision] = useState(false);
 
-  useEffect(() => {
-    setWorkloadCapacity(capacity);
-  }, [capacity]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: false }), 60);
-    return () => clearTimeout(timer);
-  }, [range]);
+  // Keep the domain engine in sync before child components calculate pressure.
+  // Doing this during render ensures the same interaction immediately produces
+  // new pressure bands instead of waiting for a later effect cycle.
+  setWorkloadCapacity(capacity);
 
   function updateCommitment(id: string, patch: Partial<Commitment>) {
     setCommitments((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
+
+  function moveCommitmentEarlier(id: string) {
+    setCommitments((current) => current.map((item) => {
+      if (item.id !== id) return item;
+      const shift = 24 * 60 * 60 * 1000;
+      return {
+        ...item,
+        startAt: new Date(new Date(item.startAt).getTime() - shift).toISOString(),
+        dueAt: new Date(new Date(item.dueAt).getTime() - shift).toISOString(),
+      };
+    }));
+  }
+
+  function handleCapacityChange(next: DailyCapacity) {
+    setCapacity(next);
+    setShowCapacity(false);
+    setTimeout(() => setShowDecision(true), 180);
   }
 
   const activeCommitments = commitments.filter((item) => !item.completedAt);
@@ -90,7 +106,15 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      <CapacityCheckIn onChange={setCapacity} onClose={() => setShowCapacity(false)} value={capacity} visible={showCapacity} />
+      <CapacityCheckIn onChange={handleCapacityChange} onClose={() => setShowCapacity(false)} value={capacity} visible={showCapacity} />
+      <CapacityDecisionSheet
+        capacity={capacity}
+        commitments={commitments}
+        now={now}
+        onClose={() => setShowDecision(false)}
+        onMoveEarlier={moveCommitmentEarlier}
+        visible={showDecision}
+      />
 
       <AddCommitmentModal now={now} onAdd={(commitment) => setCommitments((current) => [...current, commitment])} onClose={() => setShowAdd(false)} visible={showAdd} />
 
