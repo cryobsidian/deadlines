@@ -16,12 +16,14 @@ type Props = {
   onPressLine: (commitment: Commitment) => void;
 };
 
+// Category is deliberately a secondary signal: enough colour to scan the source
+// of pressure, without turning the workload timeline into a calendar rainbow.
 const categoryAccent: Record<string, string> = {
-  university: '#D9B8A6',
-  work: '#AFC3D7',
-  health: '#A8C9B1',
-  personal: '#C6B5D7',
-  social: '#D8C6A4',
+  university: '#E8B59E',
+  work: '#9FC7E8',
+  health: '#9DD2AD',
+  personal: '#CBB1E6',
+  social: '#E0C27D',
 };
 
 function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: number, topInset: number) {
@@ -43,7 +45,7 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
   const lineWidth = commitment.difficulty === 1 ? 0.9 : commitment.difficulty === 2 ? 1.2 : 1.55;
   const lineHitSlop = { bottom: 10, left: 14, right: 14, top: 10 };
   const timelineHeight = height + topInset;
-  const accent = categoryAccent[commitment.category ?? ''] ?? '#9B9894';
+  const accent = categoryAccent[commitment.category ?? ''] ?? '#AAA6A1';
 
   const isDay = range === 'day';
   const isMonth = range === 'month';
@@ -86,7 +88,7 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
       {status !== 'future' && (
         <View pointerEvents="none" style={[styles.line, styles.activeLine, { height: Math.max(18, activeBottom - activeTop), left: '50%', marginLeft: -lineWidth / 2, top: activeTop, width: lineWidth }]} />
       )}
-      <View pointerEvents="none" style={[styles.deadline, { borderColor: accent, left: '50%', marginLeft: -3.25, top: Math.max(0, dueY - 3.25) }]} />
+      <View pointerEvents="none" style={[styles.deadline, { borderColor: accent, left: '50%', marginLeft: -3.75, top: Math.max(0, dueY - 3.75) }]} />
     </View>
   );
 }
@@ -96,10 +98,10 @@ const styles = StyleSheet.create({
   line: { borderRadius: 999, position: 'absolute', zIndex: 4 },
   futureLine: { backgroundColor: '#333333', opacity: 0.62 },
   activeLine: { backgroundColor: '#E3E0DC', opacity: 0.92, zIndex: 6 },
-  deadline: { backgroundColor: timelineTheme.colors.background, borderRadius: 4, borderWidth: 1.25, height: 6.5, position: 'absolute', width: 6.5, zIndex: 7 },
+  deadline: { backgroundColor: timelineTheme.colors.background, borderRadius: 4, borderWidth: 1.5, height: 7.5, position: 'absolute', width: 7.5, zIndex: 7 },
   titleWrap: { alignItems: 'center', left: 2, position: 'absolute', right: 2, zIndex: 10 },
-  titleRow: { alignItems: 'center', flexDirection: 'row', gap: 4, maxWidth: '100%' },
-  categoryDot: { borderRadius: 99, height: 4, width: 4 },
+  titleRow: { alignItems: 'center', flexDirection: 'row', gap: 5, maxWidth: '100%' },
+  categoryDot: { borderRadius: 99, height: 6, width: 6 },
   title: { color: '#E1DEDA', flexShrink: 1, fontSize: 10.25, fontWeight: '600', letterSpacing: 0.02, lineHeight: 11.5, textAlign: 'center' },
   monthTitle: { color: '#C8C5C1', fontSize: 9.25, fontWeight: '600' },
 });
