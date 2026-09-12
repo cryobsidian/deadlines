@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { OptionPickerSheet } from '@/components/OptionPickerSheet';
-import { addDays } from '@/domain/workload';
 import type { Commitment, CommitmentCategory, CommitmentDifficulty, CommitmentFlexibility, CommitmentPriority } from '@/types/commitment';
 
 const categoryOptions = ['university', 'work', 'health', 'personal', 'social'].map((value) => ({ label: titleCase(value), value: value as CommitmentCategory }));
@@ -11,6 +11,7 @@ const difficultyOptions = [1, 2, 3].map((value) => ({ label: value === 1 ? 'Easy
 const flexibilityOptions = ['fixed', 'flexible', 'droppable'].map((value) => ({ label: titleCase(value), value: value as CommitmentFlexibility }));
 
 type Picker = 'category' | 'priority' | 'difficulty' | 'flexibility' | null;
+type DuePicker = 'date' | 'time' | null;
 
 type Props = {
   visible: boolean;
@@ -19,24 +20,31 @@ type Props = {
   onAdd: (commitment: Commitment) => void;
 };
 
-function toDateInputValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function defaultDue(now: Date) {
+  const due = new Date(now);
+  due.setDate(due.getDate() + 3);
+  due.setHours(18, 0, 0, 0);
+  return due;
+}
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function formatTime(date: Date) {
+  return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
 export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
-  const defaultDueDate = toDateInputValue(addDays(now, 3));
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CommitmentCategory>('university');
   const [priority, setPriority] = useState<CommitmentPriority>('medium');
   const [difficulty, setDifficulty] = useState<CommitmentDifficulty>(2);
   const [flexibility, setFlexibility] = useState<CommitmentFlexibility>('flexible');
-  const [dueDate, setDueDate] = useState(defaultDueDate);
-  const [dueTime, setDueTime] = useState('18:00');
+  const [due, setDue] = useState<Date>(() => defaultDue(now));
   const [advanced, setAdvanced] = useState(false);
   const [picker, setPicker] = useState<Picker>(null);
+  const [duePicker, setDuePicker] = useState<DuePicker>(null);
   const [error, setError] = useState<string | null>(null);
 
   function reset() {
@@ -45,10 +53,10 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
     setPriority('medium');
     setDifficulty(2);
     setFlexibility('flexible');
-    setDueDate(toDateInputValue(addDays(now, 3)));
-    setDueTime('18:00');
+    setDue(defaultDue(now));
     setAdvanced(false);
     setPicker(null);
+    setDuePicker(null);
     setError(null);
   }
 
@@ -60,20 +68,6 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
   function submit() {
     const trimmed = title.trim();
     if (!trimmed) return setError('Title is required');
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return setError('Use date format YYYY-MM-DD');
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(dueTime)) return setError('Use time format HH:MM');
-
-    const [year, month, day] = dueDate.split('-').map(Number);
-    const [hour, minute] = dueTime.split(':').map(Number);
-    const due = new Date(year, month - 1, day, hour, minute, 0, 0);
-
-    if (
-      due.getFullYear() !== year ||
-      due.getMonth() !== month - 1 ||
-      due.getDate() !== day
-    ) return setError('Enter a valid due date');
-
     if (due.getTime() <= now.getTime()) return setError('Due date must be after now');
 
     onAdd({
@@ -87,6 +81,20 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
       flexibility,
     });
     close();
+  }
+
+  function updateDueDate(next: Date) {
+    const merged = new Date(due);
+    merged.setFullYear(next.getFullYear(), next.getMonth(), next.getDate());
+    setDue(merged);
+    setError(null);
+  }
+
+  function updateDueTime(next: Date) {
+    const merged = new Date(due);
+    merged.setHours(next.getHours(), next.getMinutes(), 0, 0);
+    setDue(merged);
+    setError(null);
   }
 
   return (
@@ -106,29 +114,48 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
 
               <Text style={styles.label}>Due</Text>
               <View style={styles.row}>
-                <View style={[styles.field, styles.dateField]}>
-                  <TextInput
-                    autoCapitalize="none"
-                    onChangeText={(value) => { setDueDate(value.replace(/[^0-9-]/g, '').slice(0, 10)); setError(null); }}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#6E6E6E"
-                    style={styles.input}
-                    value={dueDate}
-                  />
+                <Pressable onPress={() => setDuePicker('date')} style={[styles.pickerField, styles.field]}>
+                  <Text style={styles.pickerValue}>{formatDate(due)}</Text>
                   <Text style={styles.hint}>date</Text>
-                </View>
-                <View style={styles.timeField}>
-                  <TextInput
-                    autoCapitalize="none"
-                    onChangeText={(value) => { setDueTime(value.replace(/[^0-9:]/g, '').slice(0, 5)); setError(null); }}
-                    placeholder="18:00"
-                    placeholderTextColor="#6E6E6E"
-                    style={styles.input}
-                    value={dueTime}
-                  />
+                </Pressable>
+                <Pressable onPress={() => setDuePicker('time')} style={[styles.pickerField, styles.field]}>
+                  <Text style={styles.pickerValue}>{formatTime(due)}</Text>
                   <Text style={styles.hint}>time</Text>
-                </View>
+                </Pressable>
               </View>
+
+              {Platform.OS !== 'web' && duePicker ? (
+                <DateTimePicker
+                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                  minimumDate={duePicker === 'date' ? now : undefined}
+                  mode={duePicker}
+                  onChange={(_, selectedDate) => {
+                    if (Platform.OS === 'android') setDuePicker(null);
+                    if (!selectedDate) return;
+                    if (duePicker === 'date') updateDueDate(selectedDate);
+                    else updateDueTime(selectedDate);
+                  }}
+                  value={due}
+                />
+              ) : null}
+
+              {Platform.OS === 'web' && duePicker ? (
+                <View style={styles.webFallback}>
+                  <Text style={styles.webFallbackText}>Native date/time picker is used on iOS and Android. For web preview, adjust with the quick controls below.</Text>
+                  {duePicker === 'date' ? (
+                    <View style={styles.quickRow}>
+                      <QuickButton label="−1 day" onPress={() => setDue((current) => new Date(current.getTime() - 86400000))} />
+                      <QuickButton label="+1 day" onPress={() => setDue((current) => new Date(current.getTime() + 86400000))} />
+                    </View>
+                  ) : (
+                    <View style={styles.quickRow}>
+                      <QuickButton label="−1 hr" onPress={() => setDue((current) => new Date(current.getTime() - 3600000))} />
+                      <QuickButton label="+1 hr" onPress={() => setDue((current) => new Date(current.getTime() + 3600000))} />
+                    </View>
+                  )}
+                  <Pressable onPress={() => setDuePicker(null)} style={styles.webDone}><Text style={styles.webDoneText}>Done</Text></Pressable>
+                </View>
+              ) : null}
 
               <SettingRow label="Category" value={titleCase(category)} onPress={() => setPicker('category')} />
               <SettingRow label="Priority" value={titleCase(priority)} onPress={() => setPicker('priority')} />
@@ -156,6 +183,10 @@ function SettingRow({ label, value, onPress }: { label: string; value: string; o
   return <Pressable onPress={onPress} style={styles.setting}><Text style={styles.settingLabel}>{label}</Text><View style={styles.settingRight}><Text style={styles.settingValue}>{value}</Text><Text style={styles.chevron}>›</Text></View></Pressable>;
 }
 
+function QuickButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return <Pressable onPress={onPress} style={styles.quickButton}><Text style={styles.quickButtonText}>{label}</Text></Pressable>;
+}
+
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
@@ -177,9 +208,16 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#171717', borderColor: '#3C3C3C', borderRadius: 10, borderWidth: 1, color: '#F4F1ED', fontSize: 14, paddingHorizontal: 12, paddingVertical: 11 },
   row: { flexDirection: 'row', gap: 10 },
   field: { flex: 1 },
-  dateField: { flex: 1.45 },
-  timeField: { flex: 0.8 },
+  pickerField: { backgroundColor: '#171717', borderColor: '#3C3C3C', borderRadius: 10, borderWidth: 1, minHeight: 58, paddingHorizontal: 12, paddingVertical: 10 },
+  pickerValue: { color: '#F4F1ED', fontSize: 13, fontWeight: '700' },
   hint: { color: '#666', fontSize: 9, marginTop: 5 },
+  webFallback: { backgroundColor: '#151515', borderColor: '#303030', borderRadius: 12, borderWidth: 1, marginTop: 10, padding: 12 },
+  webFallbackText: { color: '#7D7D7D', fontSize: 10, lineHeight: 15 },
+  quickRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  quickButton: { alignItems: 'center', borderColor: '#393939', borderRadius: 9, borderWidth: 1, flex: 1, paddingVertical: 9 },
+  quickButtonText: { color: '#D9D6D2', fontSize: 10, fontWeight: '800' },
+  webDone: { alignItems: 'center', marginTop: 8, paddingVertical: 7 },
+  webDoneText: { color: '#A9A6A2', fontSize: 10, fontWeight: '800' },
   setting: { alignItems: 'center', borderBottomColor: '#252525', borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 48, paddingVertical: 8 },
   settingLabel: { color: '#D7D4D0', fontSize: 12.5, fontWeight: '600' },
   settingRight: { alignItems: 'center', flexDirection: 'row', gap: 7 },
