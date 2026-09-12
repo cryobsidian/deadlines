@@ -30,13 +30,6 @@ function workloadLabel(band: WorkloadBand) {
   return 'MANAGEABLE';
 }
 
-function workloadHint(band: WorkloadBand) {
-  if (band === 'overloaded') return 'Rebalance now';
-  if (band === 'strained') return 'Pressure is building';
-  if (band === 'busy') return 'Watch the next commitments';
-  return 'Workload is within range';
-}
-
 export default function HomeScreen() {
   const [range, setRange] = useState<TimeRange>('week');
   const insets = useSafeAreaInsets();
@@ -122,10 +115,7 @@ export default function HomeScreen() {
         <TimeScaleSelector value={range} onChange={setRange} />
         <Pressable onPress={() => setShowDecision(true)} style={styles.forecastStatus}>
           <View style={[styles.forecastDot, currentBand === 'busy' && styles.forecastBusy, currentBand === 'strained' && styles.forecastStrained, currentBand === 'overloaded' && styles.forecastOverloaded]} />
-          <View>
-            <Text style={styles.forecastLabel}>{workloadLabel(currentBand)}</Text>
-            <Text style={styles.forecastHint}>{workloadHint(currentBand)}</Text>
-          </View>
+          <Text style={styles.forecastLabel}>{workloadLabel(currentBand)}</Text>
           <Text style={styles.forecastScore}>{currentScore}</Text>
         </Pressable>
       </View>
@@ -242,21 +232,20 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: '#050505', flex: 1, paddingHorizontal: 12, position: 'relative' },
   scroll: { flex: 1, minHeight: 0 },
   scrollContent: { flexGrow: 1 },
-  headerSafeSpace: { height: 154 },
+  headerSafeSpace: { height: 126 },
   canvas: { minHeight: 920, position: 'relative', width: '100%' },
-  topOverlay: { alignItems: 'center', gap: 9, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
-  mask: { backgroundColor: '#050505', bottom: -12, left: 0, opacity: 0.97, position: 'absolute', right: 0 },
+  topOverlay: { alignItems: 'center', gap: 7, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
+  mask: { backgroundColor: '#050505', bottom: -10, left: 0, opacity: 0.97, position: 'absolute', right: 0 },
   title: { color: '#F1EFEC', fontSize: 14, fontWeight: '500', letterSpacing: 4.5, lineHeight: 26, textAlign: 'center', width: '100%', zIndex: 1 },
   menuButton: { gap: 4, padding: 8, position: 'absolute', right: 15, zIndex: 2 },
   menuLine: { backgroundColor: '#C8C5C1', height: 1.2, width: 22 },
-  forecastStatus: { alignItems: 'center', backgroundColor: '#0C0C0C', borderColor: '#242424', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: 9, maxWidth: 300, paddingHorizontal: 12, paddingVertical: 8, width: '100%', zIndex: 1 },
-  forecastDot: { backgroundColor: '#78907D', borderRadius: 5, height: 7, width: 7 },
+  forecastStatus: { alignItems: 'center', alignSelf: 'flex-end', backgroundColor: 'rgba(12,12,12,0.72)', borderColor: '#232323', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 6, paddingHorizontal: 9, paddingVertical: 5, zIndex: 1 },
+  forecastDot: { backgroundColor: '#78907D', borderRadius: 4, height: 5, width: 5 },
   forecastBusy: { backgroundColor: '#B5A06F' },
   forecastStrained: { backgroundColor: '#D98673' },
   forecastOverloaded: { backgroundColor: '#F16F5D' },
-  forecastLabel: { color: '#EAE7E3', fontSize: 10.5, fontWeight: '800', letterSpacing: 0.65 },
-  forecastHint: { color: '#6F6F6F', fontSize: 8.5, marginTop: 2 },
-  forecastScore: { color: '#8B8B8B', fontSize: 15, fontWeight: '800', marginLeft: 'auto' },
+  forecastLabel: { color: '#D8D5D0', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.7 },
+  forecastScore: { color: '#707070', fontSize: 8.5, fontWeight: '800' },
   bottomControls: { alignItems: 'center', backgroundColor: '#050505', borderTopColor: '#171717', borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 62, paddingHorizontal: 16, paddingTop: 9 },
   circleButton: { alignItems: 'center', backgroundColor: '#090909', borderColor: '#333333', borderRadius: 23, borderWidth: 1, height: 46, justifyContent: 'center', width: 46 },
   listGlyph: { alignItems: 'flex-start', gap: 4, justifyContent: 'center', width: 23 },
