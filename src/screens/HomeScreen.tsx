@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddCommitmentModal } from '@/components/AddCommitmentModal';
+import { CapacityCheckIn, CapacityPill, type DailyCapacity } from '@/components/CapacityCheckIn';
 import { TimeScaleSelector } from '@/components/TimeScaleSelector';
 import { VerticalTimeline } from '@/components/VerticalTimeline';
 import { WorkspaceSheet, type WorkspacePage } from '@/components/WorkspaceSheet';
@@ -33,6 +34,8 @@ export default function HomeScreen() {
   const [workspacePage, setWorkspacePage] = useState<WorkspacePage>(null);
   const [showList, setShowList] = useState(false);
   const [selected, setSelected] = useState<Commitment | null>(null);
+  const [capacity, setCapacity] = useState<DailyCapacity>('okay');
+  const [showCapacity, setShowCapacity] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: false }), 60);
@@ -56,14 +59,7 @@ export default function HomeScreen() {
         style={styles.scroll}>
         <View style={styles.headerSafeSpace} />
         <View style={[styles.canvas, { height: timelineContentHeight(range) }]}>
-          <VerticalTimeline
-            commitments={commitments}
-            now={now}
-            onUpdateCommitment={updateCommitment}
-            range={range}
-            windowEnd={visibleWindow.end}
-            windowStart={visibleWindow.start}
-          />
+          <VerticalTimeline commitments={commitments} now={now} onUpdateCommitment={updateCommitment} range={range} windowEnd={visibleWindow.end} windowStart={visibleWindow.start} />
         </View>
       </ScrollView>
 
@@ -84,15 +80,13 @@ export default function HomeScreen() {
             <View style={styles.listDot} /><View style={styles.listBar} />
           </View>
         </Pressable>
+        <CapacityPill onPress={() => setShowCapacity(true)} value={capacity} />
         <Pressable onPress={() => setShowAdd(true)} style={styles.circleButton}><Text style={styles.plus}>+</Text></Pressable>
       </View>
 
-      <AddCommitmentModal
-        now={now}
-        onAdd={(commitment) => setCommitments((current) => [...current, commitment])}
-        onClose={() => setShowAdd(false)}
-        visible={showAdd}
-      />
+      <CapacityCheckIn onChange={setCapacity} onClose={() => setShowCapacity(false)} value={capacity} visible={showCapacity} />
+
+      <AddCommitmentModal now={now} onAdd={(commitment) => setCommitments((current) => [...current, commitment])} onClose={() => setShowAdd(false)} visible={showAdd} />
 
       <Modal animationType="slide" onRequestClose={() => setShowMenu(false)} statusBarTranslucent transparent visible={showMenu}>
         <View style={styles.sheetOverlay}>
@@ -100,7 +94,7 @@ export default function HomeScreen() {
           <View style={styles.sheetCard}>
             <View style={styles.grabber} />
             <Text style={styles.sheetTitle}>Workspace</Text>
-            <MenuRow title="Connected sources" subtitle="Outlook, Teams and backend" onPress={() => { setShowMenu(false); setWorkspacePage('sources'); }} />
+            <MenuRow title="Connected sources" subtitle="Calendars, coursework and meetings" onPress={() => { setShowMenu(false); setWorkspacePage('sources'); }} />
             <MenuRow title="Priorities" subtitle="Arrange your life modules" onPress={() => { setShowMenu(false); setWorkspacePage('priorities'); }} />
             <MenuRow title="Notifications" subtitle="Only meaningful workload changes" onPress={() => { setShowMenu(false); setWorkspacePage('notifications'); }} />
             <MenuRow title="Settings" subtitle="Preferences and appearance" onPress={() => { setShowMenu(false); setWorkspacePage('settings'); }} />
@@ -122,10 +116,7 @@ export default function HomeScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
               {activeCommitments.map((item) => (
                 <Pressable key={item.id} onPress={() => { setShowList(false); setSelected(item); }} style={styles.commitmentRow}>
-                  <View style={styles.commitmentCopy}>
-                    <Text style={styles.commitmentTitle}>{item.title}</Text>
-                    <Text style={styles.commitmentMeta}>{titleCase(item.category ?? 'personal')} · {titleCase(item.priority ?? 'medium')}</Text>
-                  </View>
+                  <View style={styles.commitmentCopy}><Text style={styles.commitmentTitle}>{item.title}</Text><Text style={styles.commitmentMeta}>{titleCase(item.category ?? 'personal')} · {titleCase(item.priority ?? 'medium')}</Text></View>
                   <Text style={styles.commitmentDue}>{new Date(item.dueAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</Text>
                 </Pressable>
               ))}
