@@ -66,10 +66,12 @@ export function CommitmentLane({
     const barMid = (barTop + barBottom) / 2;
     const rawDayTop = barMid - 7; // center around middle (half lineHeight)
     titleTop = Math.max(minVisibleTop, Math.min(rawDayTop, timelineHeight - 22));
-    // Beside bar: bar at left:0, so offset by lineWidth + gap to avoid overlap
+    // Place text to the right of the centered bar with a clear gap — no overlap
+    const gap = 10;
     titleWrapStyle = {
       top: titleTop,
-      left: lineWidth + 10,
+      left: '50%' as const,
+      marginLeft: lineWidth / 2 + gap,
       right: 2,
       alignItems: 'flex-start' as const,
     };
@@ -99,6 +101,8 @@ export function CommitmentLane({
           {
             backgroundColor: timelineTheme.colors.future,
             height: Math.max(16, clampedFutureBottom - futureTop),
+            left: '50%',
+            marginLeft: -lineWidth / 2,
             top: futureTop,
             width: lineWidth,
           },
@@ -114,6 +118,8 @@ export function CommitmentLane({
             {
               backgroundColor: timelineTheme.colors.active,
               height: Math.max(18, clampedActiveBottom - activeTop),
+              left: '50%',
+              marginLeft: -lineWidth / 2,
               top: activeTop,
               width: lineWidth,
             },
@@ -127,12 +133,16 @@ export function CommitmentLane({
           styles.deadline,
           {
             borderColor: status === 'future' ? timelineTheme.colors.future : timelineTheme.colors.active,
+            left: '50%',
+            marginLeft: -6,
             top: Math.max(0, dueY - 6),
           },
         ]}
       />
       {showRunner && (
-        <View pointerEvents="none" style={[styles.runnerSlot, { bottom: 8 }]}>
+        <View
+          pointerEvents="none"
+          style={[styles.runnerSlot, { bottom: 8, left: '50%', marginLeft: -29 }]}>
           <Runner fatigue={activeCount} scale={runnerScale} />
         </View>
       )}
