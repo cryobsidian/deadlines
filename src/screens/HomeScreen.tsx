@@ -112,12 +112,14 @@ export default function HomeScreen() {
         <Pressable onPress={() => setShowMenu(true)} style={[styles.menuButton, { top: insets.top + 4 }]}>
           <View style={styles.menuLine} /><View style={styles.menuLine} /><View style={styles.menuLine} />
         </Pressable>
-        <TimeScaleSelector value={range} onChange={setRange} />
-        <Pressable onPress={() => setShowDecision(true)} style={styles.forecastStatus}>
-          <View style={[styles.forecastDot, currentBand === 'busy' && styles.forecastBusy, currentBand === 'strained' && styles.forecastStrained, currentBand === 'overloaded' && styles.forecastOverloaded]} />
-          <Text style={styles.forecastLabel}>{workloadLabel(currentBand)}</Text>
-          <Text style={styles.forecastScore}>{currentScore}</Text>
-        </Pressable>
+        <View style={styles.topControlsRow}>
+          <TimeScaleSelector value={range} onChange={setRange} />
+          <Pressable onPress={() => setShowDecision(true)} style={styles.forecastStatus}>
+            <View style={[styles.forecastDot, currentBand === 'busy' && styles.forecastBusy, currentBand === 'strained' && styles.forecastStrained, currentBand === 'overloaded' && styles.forecastOverloaded]} />
+            <Text style={styles.forecastLabel}>{workloadLabel(currentBand)}</Text>
+            <Text style={styles.forecastScore}>{currentScore}</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.bottomControls}>
@@ -232,20 +234,21 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: '#050505', flex: 1, paddingHorizontal: 12, position: 'relative' },
   scroll: { flex: 1, minHeight: 0 },
   scrollContent: { flexGrow: 1 },
-  headerSafeSpace: { height: 126 },
+  headerSafeSpace: { height: 112 },
   canvas: { minHeight: 920, position: 'relative', width: '100%' },
   topOverlay: { alignItems: 'center', gap: 7, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
   mask: { backgroundColor: '#050505', bottom: -10, left: 0, opacity: 0.97, position: 'absolute', right: 0 },
   title: { color: '#F1EFEC', fontSize: 14, fontWeight: '500', letterSpacing: 4.5, lineHeight: 26, textAlign: 'center', width: '100%', zIndex: 1 },
   menuButton: { gap: 4, padding: 8, position: 'absolute', right: 15, zIndex: 2 },
   menuLine: { backgroundColor: '#C8C5C1', height: 1.2, width: 22 },
-  forecastStatus: { alignItems: 'center', alignSelf: 'flex-end', backgroundColor: 'rgba(12,12,12,0.72)', borderColor: '#232323', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 6, paddingHorizontal: 9, paddingVertical: 5, zIndex: 1 },
+  topControlsRow: { alignItems: 'center', flexDirection: 'row', gap: 10, justifyContent: 'center', width: '100%', zIndex: 1 },
+  forecastStatus: { alignItems: 'center', backgroundColor: 'rgba(12,12,12,0.72)', borderColor: '#232323', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 5, paddingHorizontal: 8, paddingVertical: 5 },
   forecastDot: { backgroundColor: '#78907D', borderRadius: 4, height: 5, width: 5 },
   forecastBusy: { backgroundColor: '#B5A06F' },
   forecastStrained: { backgroundColor: '#D98673' },
   forecastOverloaded: { backgroundColor: '#F16F5D' },
-  forecastLabel: { color: '#D8D5D0', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.7 },
-  forecastScore: { color: '#707070', fontSize: 8.5, fontWeight: '800' },
+  forecastLabel: { color: '#D8D5D0', fontSize: 8.2, fontWeight: '800', letterSpacing: 0.65 },
+  forecastScore: { color: '#707070', fontSize: 8.2, fontWeight: '800' },
   bottomControls: { alignItems: 'center', backgroundColor: '#050505', borderTopColor: '#171717', borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 62, paddingHorizontal: 16, paddingTop: 9 },
   circleButton: { alignItems: 'center', backgroundColor: '#090909', borderColor: '#333333', borderRadius: 23, borderWidth: 1, height: 46, justifyContent: 'center', width: 46 },
   listGlyph: { alignItems: 'flex-start', gap: 4, justifyContent: 'center', width: 23 },
