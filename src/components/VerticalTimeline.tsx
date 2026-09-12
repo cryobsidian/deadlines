@@ -61,7 +61,7 @@ function getTopContentInset(height: number) {
 }
 
 function getBottomContentInset(height: number) {
-  return clamp(height * 0.075, 48, 66);
+  return clamp(height * 0.04, 28, 40);
 }
 
 function getPeriodMidpoint(period: OverloadPeriod) {
@@ -176,11 +176,6 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
           }}
           style={styles.laneField}>
           <Pressable accessibilityLabel="Dismiss commitment details" onPress={() => setSelection(null)} style={styles.dismissLayer} />
-
-          <View pointerEvents="none" style={styles.statusReadout}>
-            <View style={[styles.statusDot, currentBand === 'strained' && styles.statusDotStrained, currentBand === 'overloaded' && styles.statusDotOverloaded]} />
-            <Text style={styles.statusReadoutText}>{workloadCopy(currentBand)}</Text>
-          </View>
 
           {overloadPeriods.map((period) => {
             const startY = contentTopInset + (1 - getTimePosition(period.start, windowStart, windowEnd)) * contentHeight;
@@ -328,11 +323,6 @@ const styles = StyleSheet.create({
   todayDot: { backgroundColor: '#ECE9E5' },
   laneField: { flex: 1, flexDirection: 'row', minHeight: 0, overflow: 'hidden', paddingLeft: USER_GUTTER_WIDTH, position: 'relative' },
   dismissLayer: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: 0 },
-  statusReadout: { alignItems: 'center', flexDirection: 'row', gap: 6, position: 'absolute', right: 6, top: 44, zIndex: 15 },
-  statusDot: { backgroundColor: '#777', borderRadius: 4, height: 5, width: 5 },
-  statusDotStrained: { backgroundColor: '#F39A84' },
-  statusDotOverloaded: { backgroundColor: '#FF6F61' },
-  statusReadoutText: { color: '#A5A5A5', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.8 },
   userRunner: { alignItems: 'center', left: 0, position: 'absolute', width: USER_GUTTER_WIDTH, zIndex: 18 },
   overloadRegion: { alignItems: 'flex-end', backgroundColor: 'rgba(207,103,82,0.055)', borderLeftColor: 'rgba(232,133,112,0.3)', borderLeftWidth: 1, borderRightColor: 'rgba(232,133,112,0.3)', borderRightWidth: 1, justifyContent: 'flex-start', left: USER_GUTTER_WIDTH, paddingRight: 7, paddingTop: 7, position: 'absolute', right: 0, zIndex: 2 },
   pressureLabel: { color: '#D98673', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.75, opacity: 0.86 },
