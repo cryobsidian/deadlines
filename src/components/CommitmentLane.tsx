@@ -86,16 +86,18 @@ export function CommitmentLane({
 
   return (
     <View pointerEvents="box-none" style={styles.container}>
-      {/* Title: day=middle beside bar (no overlap), week/month=top */}
-      <View pointerEvents="none" style={[styles.titleWrap, titleWrapStyle]}>
-        <Text numberOfLines={2} style={[styles.title, titleStyle]}>
-          {commitment.title}
-        </Text>
-      </View>
-
+      {/* Title is now the trigger — tap text to open details, not bar tip */}
       <Pressable
         hitSlop={lineHitSlop}
         onPress={() => onPressLine(commitment)}
+        style={[styles.titleWrap, titleWrapStyle]}>
+        <Text numberOfLines={2} style={[styles.title, titleStyle]}>
+          {commitment.title}
+        </Text>
+      </Pressable>
+
+      <View
+        pointerEvents="none"
         style={[
           styles.line,
           {
@@ -109,9 +111,8 @@ export function CommitmentLane({
         ]}
       />
       {status !== 'future' && (
-        <Pressable
-          hitSlop={lineHitSlop}
-          onPress={() => onPressLine(commitment)}
+        <View
+          pointerEvents="none"
           style={[
             styles.line,
             styles.activeLine,
@@ -126,9 +127,8 @@ export function CommitmentLane({
           ]}
         />
       )}
-      <Pressable
-        hitSlop={lineHitSlop}
-        onPress={() => onPressLine(commitment)}
+      <View
+        pointerEvents="none"
         style={[
           styles.deadline,
           {
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     left: 2,
     position: 'absolute',
     right: 2,
-    zIndex: 9,
+    zIndex: 10,
   },
   title: {
     color: timelineTheme.colors.text,
