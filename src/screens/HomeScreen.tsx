@@ -10,8 +10,8 @@ import { TimeScaleSelector } from '@/components/TimeScaleSelector';
 import { VerticalTimeline } from '@/components/VerticalTimeline';
 import { WorkspaceSheet, type WorkspacePage } from '@/components/WorkspaceSheet';
 import { createMockCommitments } from '@/data/mockCommitments';
-import { getVisibleWindow, setWorkloadCapacity } from '@/domain/workload';
-import type { Commitment, TimeRange } from '@/types/commitment';
+import { calculateWorkloadScore, getVisibleWindow, getWorkloadBand, setWorkloadCapacity } from '@/domain/workload';
+import type { Commitment, TimeRange, WorkloadBand } from '@/types/commitment';
 
 function timelineContentHeight(range: TimeRange) {
   if (range === 'day') return 920;
@@ -21,6 +21,20 @@ function timelineContentHeight(range: TimeRange) {
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function workloadLabel(band: WorkloadBand) {
+  if (band === 'overloaded') return 'OVERLOADED';
+  if (band === 'strained') return 'STRAINED';
+  if (band === 'busy') return 'BUSY';
+  return 'MANAGEABLE';
+}
+
+function workloadHint(band: WorkloadBand) {
+  if (band === 'overloaded') return 'Rebalance now';
+  if (band === 'strained') return 'Pressure is building';
+  if (band === 'busy') return 'Watch the next commitments';
+  return 'Workload is within range';
 }
 
 export default function HomeScreen() {
@@ -35,6 +49,7 @@ export default function HomeScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const [workspacePage, setWorkspacePage] = useState<WorkspacePage>(null);
   const [showList, setShowList] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [selected, setSelected] = useState<Commitment | null>(null);
   const [capacity, setCapacity] = useState<DailyCapacity>('okay');
   const [showCapacity, setShowCapacity] = useState(false);
@@ -50,6 +65,10 @@ export default function HomeScreen() {
   function completeCommitment(id: string) {
     updateCommitment(id, { completedAt: new Date().toISOString() });
     if (selected?.id === id) setSelected(null);
+  }
+
+  function restoreCommitment(id: string) {
+    updateCommitment(id, { completedAt: undefined });
   }
 
   function moveCommitmentEarlier(id: string) {
@@ -79,6 +98,9 @@ export default function HomeScreen() {
   }
 
   const activeCommitments = commitments.filter((item) => !item.completedAt);
+  const completedCommitments = commitments.filter((item) => Boolean(item.completedAt));
+  const currentScore = calculateWorkloadScore(commitments, now);
+  const currentBand = getWorkloadBand(currentScore, now);
   const canvasHeight = timelineContentHeight(range);
 
   return (
@@ -98,6 +120,14 @@ export default function HomeScreen() {
           <View style={styles.menuLine} /><View style={styles.menuLine} /><View style={styles.menuLine} />
         </Pressable>
         <TimeScaleSelector value={range} onChange={setRange} />
+        <Pressable onPress={() => setShowDecision(true)} style={styles.forecastStatus}>
+          <View style={[styles.forecastDot, currentBand === 'busy' && styles.forecastBusy, currentBand === 'strained' && styles.forecastStrained, currentBand === 'overloaded' && styles.forecastOverloaded]} />
+          <View>
+            <Text style={styles.forecastLabel}>{workloadLabel(currentBand)}</Text>
+            <Text style={styles.forecastHint}>{workloadHint(currentBand)}</Text>
+          </View>
+          <Text style={styles.forecastScore}>{currentScore}</Text>
+        </Pressable>
       </View>
 
       <View style={styles.bottomControls}>
@@ -137,7 +167,7 @@ export default function HomeScreen() {
           <View style={[styles.sheetCard, styles.listSheet]}>
             <View style={styles.grabber} />
             <View style={styles.listHeader}>
-              <View><Text style={styles.sheetTitle}>Commitments</Text><Text style={styles.sheetSubtitle}>{activeCommitments.length} active</Text></View>
+              <View><Text style={styles.sheetTitle}>Commitments</Text><Text style={styles.sheetSubtitle}>{activeCommitments.length} active · {completedCommitments.length} completed</Text></View>
               <Pressable onPress={() => setShowList(false)}><Text style={styles.close}>×</Text></Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -153,6 +183,24 @@ export default function HomeScreen() {
                   </Pressable>
                 </View>
               ))}
+
+              {completedCommitments.length > 0 ? (
+                <View style={styles.completedSection}>
+                  <Pressable onPress={() => setShowCompleted((value) => !value)} style={styles.completedHeader}>
+                    <View><Text style={styles.completedLabel}>COMPLETED</Text><Text style={styles.completedCount}>{completedCommitments.length} archived</Text></View>
+                    <Text style={styles.completedChevron}>{showCompleted ? '−' : '+'}</Text>
+                  </Pressable>
+                  {showCompleted ? completedCommitments.map((item) => (
+                    <View key={item.id} style={[styles.commitmentRow, styles.completedRow]}>
+                      <View style={styles.commitmentCopy}>
+                        <Text style={styles.completedTitle}>{item.title}</Text>
+                        <Text style={styles.commitmentMeta}>Completed {item.completedAt ? new Date(item.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}</Text>
+                      </View>
+                      <Pressable onPress={() => restoreCommitment(item.id)} style={styles.restoreButton}><Text style={styles.restoreText}>Restore</Text></Pressable>
+                    </View>
+                  )) : null}
+                </View>
+              ) : null}
             </ScrollView>
           </View>
         </View>
@@ -194,13 +242,21 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: '#050505', flex: 1, paddingHorizontal: 12, position: 'relative' },
   scroll: { flex: 1, minHeight: 0 },
   scrollContent: { flexGrow: 1 },
-  headerSafeSpace: { height: 112 },
+  headerSafeSpace: { height: 154 },
   canvas: { minHeight: 920, position: 'relative', width: '100%' },
-  topOverlay: { alignItems: 'center', gap: 10, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
+  topOverlay: { alignItems: 'center', gap: 9, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
   mask: { backgroundColor: '#050505', bottom: -12, left: 0, opacity: 0.97, position: 'absolute', right: 0 },
   title: { color: '#F1EFEC', fontSize: 14, fontWeight: '500', letterSpacing: 4.5, lineHeight: 26, textAlign: 'center', width: '100%', zIndex: 1 },
   menuButton: { gap: 4, padding: 8, position: 'absolute', right: 15, zIndex: 2 },
   menuLine: { backgroundColor: '#C8C5C1', height: 1.2, width: 22 },
+  forecastStatus: { alignItems: 'center', backgroundColor: '#0C0C0C', borderColor: '#242424', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: 9, maxWidth: 300, paddingHorizontal: 12, paddingVertical: 8, width: '100%', zIndex: 1 },
+  forecastDot: { backgroundColor: '#78907D', borderRadius: 5, height: 7, width: 7 },
+  forecastBusy: { backgroundColor: '#B5A06F' },
+  forecastStrained: { backgroundColor: '#D98673' },
+  forecastOverloaded: { backgroundColor: '#F16F5D' },
+  forecastLabel: { color: '#EAE7E3', fontSize: 10.5, fontWeight: '800', letterSpacing: 0.65 },
+  forecastHint: { color: '#6F6F6F', fontSize: 8.5, marginTop: 2 },
+  forecastScore: { color: '#8B8B8B', fontSize: 15, fontWeight: '800', marginLeft: 'auto' },
   bottomControls: { alignItems: 'center', backgroundColor: '#050505', borderTopColor: '#171717', borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 62, paddingHorizontal: 16, paddingTop: 9 },
   circleButton: { alignItems: 'center', backgroundColor: '#090909', borderColor: '#333333', borderRadius: 23, borderWidth: 1, height: 46, justifyContent: 'center', width: 46 },
   listGlyph: { alignItems: 'flex-start', gap: 4, justifyContent: 'center', width: 23 },
@@ -211,7 +267,7 @@ const styles = StyleSheet.create({
   sheetOverlay: { backgroundColor: 'rgba(0,0,0,0.58)', flex: 1, justifyContent: 'flex-end' },
   backdrop: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   sheetCard: { backgroundColor: '#101010', borderColor: '#343434', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 18 },
-  listSheet: { maxHeight: '72%' },
+  listSheet: { maxHeight: '78%' },
   grabber: { alignSelf: 'center', backgroundColor: '#4B4B4B', borderRadius: 999, height: 3, marginBottom: 18, width: 36 },
   sheetTitle: { color: '#F0EDE9', fontSize: 18, fontWeight: '800' },
   sheetSubtitle: { color: '#777', fontSize: 11, marginTop: 3 },
@@ -230,6 +286,15 @@ const styles = StyleSheet.create({
   completeRing: { borderColor: '#5A5A5A', borderRadius: 9, borderWidth: 1, height: 18, position: 'relative', width: 18 },
   completeTickA: { backgroundColor: '#B9C8BD', height: 1.4, left: 4, position: 'absolute', top: 9, transform: [{ rotate: '42deg' }], width: 5 },
   completeTickB: { backgroundColor: '#B9C8BD', height: 1.4, left: 7, position: 'absolute', top: 7, transform: [{ rotate: '-48deg' }], width: 8 },
+  completedSection: { borderTopColor: '#2B2B2B', borderTopWidth: 1, marginTop: 12, paddingTop: 6 },
+  completedHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 52 },
+  completedLabel: { color: '#A3AAA5', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
+  completedCount: { color: '#606460', fontSize: 9, marginTop: 3 },
+  completedChevron: { color: '#777', fontSize: 18 },
+  completedRow: { opacity: 0.7 },
+  completedTitle: { color: '#8C918D', fontSize: 12.5, fontWeight: '700', textDecorationLine: 'line-through' },
+  restoreButton: { borderColor: '#3B463E', borderRadius: 8, borderWidth: 1, marginLeft: 10, paddingHorizontal: 10, paddingVertical: 7 },
+  restoreText: { color: '#9EAEA2', fontSize: 9.5, fontWeight: '800' },
   detailOverlay: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.72)', flex: 1, justifyContent: 'center', padding: 18 },
   detailCard: { backgroundColor: '#101010', borderColor: '#393939', borderRadius: 18, borderWidth: 1, maxWidth: 430, padding: 18, width: '100%' },
   detailTitle: { color: '#F3F0EC', flex: 1, fontSize: 18, fontWeight: '800' },
