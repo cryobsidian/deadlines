@@ -209,29 +209,25 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
           {selection && (
             <View style={styles.detailCard}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{selection.title}</Text>
-                <View style={styles.statusBadge}><Text style={styles.statusText}>{getCommitmentStatus(selection, now).toUpperCase()}</Text></View>
+                <View style={styles.modalTitleWrap}>
+                  <Text style={styles.modalTitle}>{selection.title}</Text>
+                  <Text style={styles.modalSummary}>{titleCase(selection.category)} · {titleCase(selection.priority)} · {titleCase(selection.flexibility)}</Text>
+                </View>
+                <View style={styles.headerActions}>
+                  <View style={styles.statusBadge}><Text style={styles.statusText}>{getCommitmentStatus(selection, now).toUpperCase()}</Text></View>
+                  <Pressable accessibilityLabel="Close details" onPress={() => setSelection(null)} style={styles.closeButton}><Text style={styles.closeButtonText}>×</Text></Pressable>
+                </View>
               </View>
 
-              <View style={styles.metaGrid}>
-                <Meta label="Category" value={titleCase(selection.category)} />
-                <Meta label="Priority" value={titleCase(selection.priority)} />
-                <Meta label="Difficulty" value={selection.difficulty === 1 ? 'Easy' : selection.difficulty === 2 ? 'Medium' : 'Hard'} />
-                <Meta label="Flexibility" value={titleCase(selection.flexibility)} />
-              </View>
-
+              <View style={styles.detailDivider} />
               <View style={styles.dateGrid}>
                 <Meta label="Starts" value={formatDateTime(selection.startAt)} />
                 <Meta label="Due" value={formatDateTime(selection.dueAt)} />
               </View>
-              <Meta label="Duration" value={getDurationLabel(selection.startAt, selection.dueAt)} />
-
-              <View style={styles.detailActions}>
-                <Pressable style={styles.outlineAction}><Text style={styles.outlineActionText}>Adjust date</Text><Text style={styles.actionArrow}>›</Text></Pressable>
-                <Pressable style={styles.outlineAction}><Text style={styles.outlineActionText}>Mark as complete</Text><Text style={styles.actionArrow}>›</Text></Pressable>
+              <View style={styles.metaGrid}>
+                <Meta label="Difficulty" value={selection.difficulty === 1 ? 'Easy' : selection.difficulty === 2 ? 'Medium' : 'Hard'} />
+                <Meta label="Duration" value={getDurationLabel(selection.startAt, selection.dueAt)} />
               </View>
-
-              <Pressable onPress={() => setSelection(null)} style={styles.primaryButton}><Text style={styles.primaryButtonText}>Done</Text></Pressable>
             </View>
           )}
         </View>
@@ -312,31 +308,31 @@ const styles = StyleSheet.create({
   todayDot: { backgroundColor: '#ECE9E5' },
   laneField: { flex: 1, flexDirection: 'row', minHeight: 0, overflow: 'hidden', position: 'relative' },
   dismissLayer: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: 0 },
-  statusReadout: { alignItems: 'center', flexDirection: 'row', gap: 6, position: 'absolute', right: 6, top: 86, zIndex: 15 },
+  statusReadout: { alignItems: 'center', flexDirection: 'row', gap: 6, position: 'absolute', right: 6, top: 72, zIndex: 15 },
   statusDot: { backgroundColor: '#777', borderRadius: 4, height: 5, width: 5 },
   statusDotStrained: { backgroundColor: '#F39A84' },
   statusDotOverloaded: { backgroundColor: '#FF6F61' },
   statusReadoutText: { color: '#A5A5A5', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.8 },
-  overloadRegion: { alignItems: 'flex-end', backgroundColor: 'rgba(207,103,82,0.055)', borderLeftColor: 'rgba(232,133,112,0.3)', borderLeftWidth: 1, borderRightColor: 'rgba(232,133,112,0.3)', borderRightWidth: 1, justifyContent: 'flex-end', left: 0, paddingBottom: 7, paddingRight: 7, position: 'absolute', right: 0, zIndex: 2 },
-  pressureLabel: { color: '#E98D79', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.75 },
+  overloadRegion: { alignItems: 'flex-end', backgroundColor: 'rgba(207,103,82,0.055)', borderLeftColor: 'rgba(232,133,112,0.3)', borderLeftWidth: 1, borderRightColor: 'rgba(232,133,112,0.3)', borderRightWidth: 1, justifyContent: 'flex-start', left: 0, paddingRight: 7, paddingTop: 7, position: 'absolute', right: 0, zIndex: 2 },
+  pressureLabel: { color: '#D98673', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.75, opacity: 0.86 },
   modalOverlay: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.76)', flex: 1, justifyContent: 'center', padding: 18 },
   modalBackdrop: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   detailCard: { backgroundColor: '#101010', borderColor: '#393939', borderRadius: 18, borderWidth: 1, maxWidth: 430, padding: 18, width: '100%' },
   modalHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: 10, justifyContent: 'space-between' },
-  modalTitle: { color: '#F1EEEA', flex: 1, fontSize: 18, fontWeight: '800' },
+  modalTitleWrap: { flex: 1 },
+  modalTitle: { color: '#F1EEEA', fontSize: 18, fontWeight: '800' },
+  modalSummary: { color: '#7E7E7E', fontSize: 10.5, marginTop: 5 },
+  headerActions: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   statusBadge: { backgroundColor: '#2B2B2B', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
   statusText: { color: '#ECE9E5', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.7 },
-  metaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 18 },
-  dateGrid: { flexDirection: 'row', gap: 16, marginTop: 18 },
-  metaBlock: { flex: 1, minWidth: 120 },
+  closeButton: { alignItems: 'center', height: 24, justifyContent: 'center', width: 24 },
+  closeButtonText: { color: '#8A8A8A', fontSize: 21, fontWeight: '300', lineHeight: 22 },
+  detailDivider: { backgroundColor: '#252525', height: 1, marginTop: 16 },
+  metaGrid: { flexDirection: 'row', gap: 16, marginTop: 16 },
+  dateGrid: { flexDirection: 'row', gap: 16, marginTop: 16 },
+  metaBlock: { flex: 1, minWidth: 110 },
   metaLabel: { color: '#747474', fontSize: 9.5, fontWeight: '700', letterSpacing: 0.55, marginBottom: 5, textTransform: 'uppercase' },
   metaValue: { color: '#E7E4E0', fontSize: 13, fontWeight: '600', lineHeight: 18 },
-  detailActions: { gap: 8, marginTop: 20 },
-  outlineAction: { alignItems: 'center', borderColor: '#303030', borderRadius: 11, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 13 },
-  outlineActionText: { color: '#D9D6D2', fontSize: 12, fontWeight: '700' },
-  actionArrow: { color: '#777', fontSize: 20, fontWeight: '300' },
-  primaryButton: { alignItems: 'center', backgroundColor: '#F0EEEA', borderRadius: 10, marginTop: 16, paddingVertical: 13 },
-  primaryButtonText: { color: '#171717', fontSize: 12, fontWeight: '800' },
   pressureOverlay: { flex: 1, justifyContent: 'flex-end' },
   pressureCard: { backgroundColor: '#101010', borderColor: '#363636', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, maxHeight: '78%', padding: 18 },
   grabber: { alignSelf: 'center', backgroundColor: '#494949', borderRadius: 999, height: 3, marginBottom: 18, width: 36 },
