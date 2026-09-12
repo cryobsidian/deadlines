@@ -49,6 +49,16 @@ export function CommitmentLane({
   const titleTop = Math.max(6, Math.min(rawTitleTop, height + topInset - 30));
   const clampedTitleTop = rawTitleTop < minVisibleTop ? minVisibleTop : titleTop;
 
+  // Human on bottom first, bar starts from head with spacing
+  const timelineHeight = height + topInset;
+  const RUNNER_SLOT_H = 58;
+  const RUNNER_BOTTOM = 8;
+  const HEAD_OFFSET_FROM_SLOT_TOP = 9;
+  const GAP_ABOVE_HEAD = 14;
+  const maxBarBottom = timelineHeight - RUNNER_SLOT_H - RUNNER_BOTTOM + HEAD_OFFSET_FROM_SLOT_TOP - GAP_ABOVE_HEAD;
+  const clampedFutureBottom = showRunner ? Math.min(futureBottom, maxBarBottom) : futureBottom;
+  const clampedActiveBottom = showRunner ? Math.min(activeBottom, maxBarBottom) : activeBottom;
+
   return (
     <View pointerEvents="box-none" style={styles.container}>
       {/* Title on top of each bar */}
@@ -65,7 +75,7 @@ export function CommitmentLane({
           styles.line,
           {
             backgroundColor: timelineTheme.colors.future,
-            height: Math.max(16, futureBottom - futureTop),
+            height: Math.max(16, clampedFutureBottom - futureTop),
             top: futureTop,
             width: lineWidth,
           },
@@ -80,7 +90,7 @@ export function CommitmentLane({
             styles.activeLine,
             {
               backgroundColor: timelineTheme.colors.active,
-              height: Math.max(18, activeBottom - activeTop),
+              height: Math.max(18, clampedActiveBottom - activeTop),
               top: activeTop,
               width: lineWidth,
             },
