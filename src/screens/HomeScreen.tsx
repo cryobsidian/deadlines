@@ -4,7 +4,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AddCommitmentModal } from '@/components/AddCommitmentModal';
 import { CapacityCheckIn, CapacityPill, type DailyCapacity } from '@/components/CapacityCheckIn';
-import { CapacityDecisionSheet } from '@/components/CapacityDecisionSheet';
+import { CapacityDecisionSheet, type ProtectedRecoveryWindow } from '@/components/CapacityDecisionSheet';
+import { RecoveryMarker } from '@/components/RecoveryMarker';
 import { TimeScaleSelector } from '@/components/TimeScaleSelector';
 import { VerticalTimeline } from '@/components/VerticalTimeline';
 import { WorkspaceSheet, type WorkspacePage } from '@/components/WorkspaceSheet';
@@ -38,10 +39,8 @@ export default function HomeScreen() {
   const [capacity, setCapacity] = useState<DailyCapacity>('okay');
   const [showCapacity, setShowCapacity] = useState(false);
   const [showDecision, setShowDecision] = useState(false);
+  const [protectedRecovery, setProtectedRecovery] = useState<ProtectedRecoveryWindow | null>(null);
 
-  // Keep the domain engine in sync before child components calculate pressure.
-  // Doing this during render ensures the same interaction immediately produces
-  // new pressure bands instead of waiting for a later effect cycle.
   setWorkloadCapacity(capacity);
 
   function updateCommitment(id: string, patch: Partial<Commitment>) {
@@ -52,11 +51,19 @@ export default function HomeScreen() {
     setCommitments((current) => current.map((item) => {
       if (item.id !== id) return item;
       const shift = 24 * 60 * 60 * 1000;
-      return {
+      const shifted = {
         ...item,
         startAt: new Date(new Date(item.startAt).getTime() - shift).toISOString(),
         dueAt: new Date(new Date(item.dueAt).getTime() - shift).toISOString(),
       };
+      if (protectedRecovery) {
+        const recoveryStart = new Date(protectedRecovery.start).getTime();
+        const recoveryEnd = new Date(protectedRecovery.end).getTime();
+        const shiftedStart = new Date(shifted.startAt).getTime();
+        const shiftedEnd = new Date(shifted.dueAt).getTime();
+        if (shiftedStart < recoveryEnd && shiftedEnd > recoveryStart) return item;
+      }
+      return shifted;
     }));
   }
 
@@ -67,6 +74,7 @@ export default function HomeScreen() {
   }
 
   const activeCommitments = commitments.filter((item) => !item.completedAt);
+  const canvasHeight = timelineContentHeight(range);
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: Math.max(16, insets.bottom + 10) }]}>
@@ -78,8 +86,9 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.scroll}>
         <View style={styles.headerSafeSpace} />
-        <View style={[styles.canvas, { height: timelineContentHeight(range) }]}>
+        <View style={[styles.canvas, { height: canvasHeight }]}>
           <VerticalTimeline commitments={commitments} now={now} onUpdateCommitment={updateCommitment} range={range} windowEnd={visibleWindow.end} windowStart={visibleWindow.start} />
+          <RecoveryMarker recovery={protectedRecovery} range={range} windowEnd={visibleWindow.end} windowStart={visibleWindow.start} height={canvasHeight} />
         </View>
       </ScrollView>
 
@@ -113,6 +122,7 @@ export default function HomeScreen() {
         now={now}
         onClose={() => setShowDecision(false)}
         onMoveEarlier={moveCommitmentEarlier}
+        onProtectRecovery={setProtectedRecovery}
         visible={showDecision}
       />
 
@@ -189,7 +199,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, minHeight: 0 },
   scrollContent: { flexGrow: 1 },
   headerSafeSpace: { height: 112 },
-  canvas: { minHeight: 920, width: '100%' },
+  canvas: { minHeight: 920, position: 'relative', width: '100%' },
   topOverlay: { alignItems: 'center', gap: 10, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
   mask: { backgroundColor: '#050505', bottom: -12, left: 0, opacity: 0.97, position: 'absolute', right: 0 },
   title: { color: '#F1EFEC', fontSize: 14, fontWeight: '500', letterSpacing: 4.5, lineHeight: 26, textAlign: 'center', width: '100%', zIndex: 1 },
