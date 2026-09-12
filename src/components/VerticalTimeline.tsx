@@ -136,6 +136,7 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
               height={contentHeight}
               key={commitment.id}
               now={now}
+              range={range}
               onPressLine={(pressedCommitment) => setSelection(pressedCommitment)}
               topInset={contentTopInset}
               windowEnd={windowEnd}
