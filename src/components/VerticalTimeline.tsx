@@ -17,6 +17,7 @@ import type { Commitment, TimeRange, WorkloadBand } from '@/types/commitment';
 
 const fallbackTimelineHeight = 520;
 const HOUR_MS = 60 * 60 * 1000;
+const USER_GUTTER_WIDTH = 30;
 
 type Props = {
   commitments: Commitment[];
@@ -124,7 +125,7 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
   const contentTopInset = getTopContentInset(timelineHeight);
   const contentHeight = Math.max(1, timelineHeight - contentTopInset);
   const currentY = contentTopInset + (1 - getTimePosition(now, windowStart, windowEnd)) * contentHeight;
-  const runnerTop = clamp(currentY - 43, contentTopInset + 42, timelineHeight - 70);
+  const runnerTop = clamp(currentY - 31, contentTopInset + 36, timelineHeight - 58);
 
   const pressureItems = pressureSelection ? getPressureCommitments(commitments, pressureSelection) : [];
   const rebalanceCandidate = getRebalanceCandidate(pressureItems);
@@ -196,6 +197,10 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
             );
           })}
 
+          <View pointerEvents="none" style={[styles.userRunner, { top: runnerTop }]}>
+            <Runner fatigue={runnerFatigue(currentBand)} scale={0.72} />
+          </View>
+
           {commitments.map((commitment) => (
             <CommitmentLane
               activeCount={activeCount}
@@ -210,11 +215,6 @@ export function VerticalTimeline({ commitments, now, range, windowStart, windowE
               windowStart={windowStart}
             />
           ))}
-
-          <View pointerEvents="none" style={[styles.userRunner, { top: runnerTop }]}>
-            <Text style={styles.youLabel}>YOU</Text>
-            <Runner fatigue={runnerFatigue(currentBand)} scale={0.88} />
-          </View>
         </View>
       </View>
 
@@ -321,16 +321,15 @@ const styles = StyleSheet.create({
   todayLabel: { color: '#E9E6E2', fontWeight: '800' },
   tickDot: { backgroundColor: '#8E8E8E', borderRadius: 3, height: 6, width: 6 },
   todayDot: { backgroundColor: '#ECE9E5' },
-  laneField: { flex: 1, flexDirection: 'row', minHeight: 0, overflow: 'hidden', position: 'relative' },
+  laneField: { flex: 1, flexDirection: 'row', minHeight: 0, overflow: 'hidden', paddingLeft: USER_GUTTER_WIDTH, position: 'relative' },
   dismissLayer: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: 0 },
   statusReadout: { alignItems: 'center', flexDirection: 'row', gap: 6, position: 'absolute', right: 6, top: 72, zIndex: 15 },
   statusDot: { backgroundColor: '#777', borderRadius: 4, height: 5, width: 5 },
   statusDotStrained: { backgroundColor: '#F39A84' },
   statusDotOverloaded: { backgroundColor: '#FF6F61' },
   statusReadoutText: { color: '#A5A5A5', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.8 },
-  userRunner: { alignItems: 'center', left: 7, position: 'absolute', width: 44, zIndex: 18 },
-  youLabel: { color: '#7F7F7F', fontSize: 7, fontWeight: '800', letterSpacing: 1.2, marginBottom: -2 },
-  overloadRegion: { alignItems: 'flex-end', backgroundColor: 'rgba(207,103,82,0.055)', borderLeftColor: 'rgba(232,133,112,0.3)', borderLeftWidth: 1, borderRightColor: 'rgba(232,133,112,0.3)', borderRightWidth: 1, justifyContent: 'flex-start', left: 0, paddingRight: 7, paddingTop: 7, position: 'absolute', right: 0, zIndex: 2 },
+  userRunner: { alignItems: 'center', left: 0, position: 'absolute', width: USER_GUTTER_WIDTH, zIndex: 18 },
+  overloadRegion: { alignItems: 'flex-end', backgroundColor: 'rgba(207,103,82,0.055)', borderLeftColor: 'rgba(232,133,112,0.3)', borderLeftWidth: 1, borderRightColor: 'rgba(232,133,112,0.3)', borderRightWidth: 1, justifyContent: 'flex-start', left: USER_GUTTER_WIDTH, paddingRight: 7, paddingTop: 7, position: 'absolute', right: 0, zIndex: 2 },
   pressureLabel: { color: '#D98673', fontSize: 8.5, fontWeight: '800', letterSpacing: 0.75, opacity: 0.86 },
   modalOverlay: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.76)', flex: 1, justifyContent: 'center', padding: 18 },
   modalBackdrop: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
