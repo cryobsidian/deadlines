@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 import { timelineTheme } from '@/constants/theme';
@@ -9,42 +9,77 @@ type Props = {
 };
 
 export function Runner({ scale = 1, fatigue = 0 }: Props) {
-  const [bob] = useState(() => new Animated.Value(0));
+  const cycle = useRef(new Animated.Value(0)).current;
+  const clampedFatigue = Math.max(0, Math.min(fatigue, 6));
 
   useEffect(() => {
+    cycle.setValue(0);
+    const duration = 760 + clampedFatigue * 130;
     const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bob, {
-          duration: 460 + fatigue * 140,
-          toValue: 1,
-          useNativeDriver: true,
-        }),
-        Animated.timing(bob, {
-          duration: 460 + fatigue * 140,
-          toValue: 0,
-          useNativeDriver: true,
-        }),
-      ]),
+      Animated.timing(cycle, {
+        duration,
+        toValue: 1,
+        useNativeDriver: true,
+      }),
     );
 
     animation.start();
     return () => animation.stop();
-  }, [bob, fatigue]);
+  }, [clampedFatigue, cycle]);
 
-  const translateY = bob.interpolate({ inputRange: [0, 1], outputRange: [0, -5] });
-  const lean = bob.interpolate({ inputRange: [0, 1], outputRange: ['-10deg', '8deg'] });
+  const bodyY = cycle.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: [0, -1.4, 0, -1.1, 0],
+  });
+  const bodyLean = cycle.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['-3deg', '2deg', '-3deg'],
+  });
+  const frontLegRotate = cycle.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['-24deg', '24deg', '-24deg'],
+  });
+  const backLegRotate = cycle.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['24deg', '-24deg', '24deg'],
+  });
+  const frontArmRotate = cycle.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['28deg', '-28deg', '28deg'],
+  });
+  const backArmRotate = cycle.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['-28deg', '28deg', '-28deg'],
+  });
+
+  const postureOffset = useMemo(() => Math.min(4, clampedFatigue * 0.55), [clampedFatigue]);
+  const opacity = Math.max(0.58, 1 - clampedFatigue * 0.055);
 
   return (
-    <Animated.View style={[styles.runner, { transform: [{ scale }, { translateY }] }]}>
-      <Animated.View style={[styles.body, { transform: [{ rotate: lean }] }]}>
+    <Animated.View
+      style={[
+        styles.runner,
+        {
+          opacity,
+          transform: [{ scale }, { translateY: bodyY }],
+        },
+      ]}>
+      <Animated.View
+        style={[
+          styles.body,
+          {
+            transform: [{ translateY: postureOffset }, { rotate: bodyLean }],
+          },
+        ]}>
         <View style={styles.head} />
         <View style={styles.torso} />
-        <View style={[styles.arm, styles.armBack]} />
-        <View style={[styles.arm, styles.armFront]} />
-        <View style={[styles.leg, styles.legBack]} />
-        <View style={[styles.leg, styles.legFront]} />
+
+        <Animated.View style={[styles.limb, styles.armBack, { transform: [{ rotate: backArmRotate }] }]} />
+        <Animated.View style={[styles.limb, styles.armFront, { transform: [{ rotate: frontArmRotate }] }]} />
+        <Animated.View style={[styles.limb, styles.legBack, { transform: [{ rotate: backLegRotate }] }]} />
+        <Animated.View style={[styles.limb, styles.legFront, { transform: [{ rotate: frontLegRotate }] }]} />
       </Animated.View>
-      <View style={styles.shadow} />
+      <View style={[styles.shadow, { opacity: 0.18 + clampedFatigue * 0.02 }]} />
     </Animated.View>
   );
 }
@@ -54,72 +89,66 @@ const lineColor = timelineTheme.colors.active;
 const styles = StyleSheet.create({
   runner: {
     alignItems: 'center',
-    height: 58,
+    height: 52,
     justifyContent: 'flex-end',
-    width: 54,
+    width: 48,
   },
   body: {
-    height: 48,
+    height: 42,
     position: 'relative',
-    width: 40,
+    width: 32,
   },
   head: {
-    backgroundColor: lineColor,
-    borderRadius: 7,
-    height: 13,
-    left: 23,
+    backgroundColor: 'transparent',
+    borderColor: lineColor,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    height: 10,
+    left: 18,
     position: 'absolute',
     top: 1,
-    width: 13,
+    width: 10,
   },
   torso: {
     backgroundColor: lineColor,
-    borderRadius: 4,
-    height: 25,
-    left: 18,
+    borderRadius: 2,
+    height: 20,
+    left: 15,
     position: 'absolute',
-    top: 13,
-    width: 8,
+    top: 11,
+    width: 2.2,
   },
-  arm: {
+  limb: {
     backgroundColor: lineColor,
-    borderRadius: 3,
-    height: 22,
+    borderRadius: 2,
+    height: 18,
     position: 'absolute',
-    top: 16,
-    width: 5,
+    transformOrigin: 'top center',
+    width: 2,
   },
   armBack: {
-    left: 12,
-    transform: [{ rotate: '34deg' }],
+    left: 13,
+    top: 14,
   },
   armFront: {
-    left: 27,
-    transform: [{ rotate: '-45deg' }],
-  },
-  leg: {
-    backgroundColor: lineColor,
-    borderRadius: 3,
-    height: 26,
-    position: 'absolute',
-    top: 33,
-    width: 6,
+    left: 18,
+    top: 14,
   },
   legBack: {
-    left: 12,
-    transform: [{ rotate: '42deg' }],
+    height: 20,
+    left: 14,
+    top: 29,
   },
   legFront: {
-    left: 27,
-    transform: [{ rotate: '-34deg' }],
+    height: 20,
+    left: 18,
+    top: 29,
   },
   shadow: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 8,
-    height: 2,
-    marginTop: 2,
-    width: 42,
+    backgroundColor: lineColor,
+    borderRadius: 999,
+    height: 1,
+    marginTop: 1,
+    width: 24,
   },
 });
-
-
