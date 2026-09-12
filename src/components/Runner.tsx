@@ -10,8 +10,8 @@ type Props = {
 export function Runner({ scale = 1, fatigue = 0 }: Props) {
   const tired = fatigue >= 4;
   const exhausted = fatigue >= 6;
-  const opacity = exhausted ? 0.5 : tired ? 0.72 : 0.94;
-  const lean = exhausted ? '22deg' : tired ? '13deg' : '-5deg';
+  const opacity = exhausted ? 0.48 : tired ? 0.7 : 0.9;
+  const lean = exhausted ? '22deg' : tired ? '13deg' : '-4deg';
 
   return (
     <View style={[styles.runner, { opacity, transform: [{ scale }] }]}>
@@ -33,48 +33,48 @@ const ink = timelineTheme.colors.active;
 const styles = StyleSheet.create({
   runner: {
     alignItems: 'center',
-    height: 46,
+    height: 38,
     justifyContent: 'flex-end',
-    width: 34,
+    width: 28,
   },
   figure: {
-    height: 39,
+    height: 31,
     position: 'relative',
-    width: 28,
+    width: 23,
   },
   head: {
     backgroundColor: ink,
-    borderRadius: 5,
-    height: 7,
-    left: 17,
+    borderRadius: 4,
+    height: 5.5,
+    left: 14,
     position: 'absolute',
     top: 1,
-    width: 7,
+    width: 5.5,
   },
   torso: {
     backgroundColor: ink,
     borderRadius: 999,
-    height: 17,
-    left: 14,
+    height: 14,
+    left: 11.5,
     position: 'absolute',
-    top: 8,
+    top: 6.5,
     transform: [{ rotate: '8deg' }],
-    width: 2,
+    width: 1.7,
   },
   arm: {
     backgroundColor: ink,
     borderRadius: 999,
-    height: 15,
+    height: 12,
     position: 'absolute',
-    top: 10,
-    width: 1.8,
+    top: 8,
+    width: 1.5,
   },
   armRear: {
-    left: 12,
+    left: 10,
     transform: [{ rotate: '42deg' }],
   },
   armFront: {
-    left: 17,
+    left: 14,
     transform: [{ rotate: '-48deg' }],
   },
   armRearTired: {
@@ -86,17 +86,17 @@ const styles = StyleSheet.create({
   leg: {
     backgroundColor: ink,
     borderRadius: 999,
-    height: 18,
+    height: 14.5,
     position: 'absolute',
-    top: 23,
-    width: 2,
+    top: 18.5,
+    width: 1.7,
   },
   legRear: {
-    left: 12,
+    left: 10,
     transform: [{ rotate: '34deg' }],
   },
   legFront: {
-    left: 17,
+    left: 14,
     transform: [{ rotate: '-38deg' }],
   },
   legRearExhausted: {
@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-18deg' }],
   },
   ground: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.14)',
     height: 1,
-    width: 26,
+    width: 20,
   },
 });
