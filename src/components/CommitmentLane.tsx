@@ -40,21 +40,22 @@ export function CommitmentLane({
   const futureBottom = Math.max(startY, dueY);
   const activeTop = Math.min(dueY, currentY);
   const activeBottom = Math.max(dueY, currentY);
-  const lineWidth = 2 + commitment.difficulty * 2;
+
+  // Keep difficulty visible, but use a restrained visual scale instead of thick bars.
+  const lineWidth = commitment.difficulty === 1 ? 1.25 : commitment.difficulty === 2 ? 1.75 : 2.4;
   const showRunner = status === 'active' || status === 'overdue';
-  const runnerScale = Math.max(0.54, 1 - Math.max(0, activeCount - 1) * 0.1 - commitment.difficulty * 0.04);
-  const lineHitSlop = { bottom: 8, left: 12, right: 12, top: 8 };
-  // Human on bottom first, bar starts from head with spacing
+  const runnerScale = Math.max(0.68, 0.94 - Math.max(0, activeCount - 1) * 0.045 - commitment.difficulty * 0.018);
+  const lineHitSlop = { bottom: 10, left: 14, right: 14, top: 10 };
+
   const timelineHeight = height + topInset;
-  const RUNNER_SLOT_H = 58;
-  const RUNNER_BOTTOM = 8;
-  const HEAD_OFFSET_FROM_SLOT_TOP = 9;
-  const GAP_ABOVE_HEAD = 14;
+  const RUNNER_SLOT_H = 52;
+  const RUNNER_BOTTOM = 10;
+  const HEAD_OFFSET_FROM_SLOT_TOP = 8;
+  const GAP_ABOVE_HEAD = 11;
   const maxBarBottom = timelineHeight - RUNNER_SLOT_H - RUNNER_BOTTOM + HEAD_OFFSET_FROM_SLOT_TOP - GAP_ABOVE_HEAD;
   const clampedFutureBottom = showRunner ? Math.min(futureBottom, maxBarBottom) : futureBottom;
   const clampedActiveBottom = showRunner ? Math.min(activeBottom, maxBarBottom) : activeBottom;
 
-  // Title placement: day -> middle of bar beside it (no overlap), otherwise on top of bar
   const isDay = range === 'day';
   const minVisibleTop = topInset + 74;
   let titleTop: number;
@@ -64,10 +65,9 @@ export function CommitmentLane({
     const barTop = status !== 'future' ? activeTop : futureTop;
     const barBottom = status !== 'future' ? clampedActiveBottom : clampedFutureBottom;
     const barMid = (barTop + barBottom) / 2;
-    const rawDayTop = barMid - 7; // center around middle (half lineHeight)
+    const rawDayTop = barMid - 7;
     titleTop = Math.max(minVisibleTop, Math.min(rawDayTop, timelineHeight - 22));
-    // Place text to the right of the centered bar with a clear gap — no overlap
-    const gap = 10;
+    const gap = 9;
     titleWrapStyle = {
       top: titleTop,
       left: '50%' as const,
@@ -77,7 +77,7 @@ export function CommitmentLane({
     };
     titleStyle = { textAlign: 'left' as const };
   } else {
-    const rawTitleTop = dueY - 34;
+    const rawTitleTop = dueY - 31;
     const tTop = Math.max(6, Math.min(rawTitleTop, height + topInset - 30));
     titleTop = rawTitleTop < minVisibleTop ? minVisibleTop : tTop;
     titleWrapStyle = { top: titleTop, left: 2, right: 2, alignItems: 'center' as const };
@@ -86,7 +86,6 @@ export function CommitmentLane({
 
   return (
     <View pointerEvents="box-none" style={styles.container}>
-      {/* Title is now the trigger — tap text to open details, not bar tip */}
       <Pressable
         hitSlop={lineHitSlop}
         onPress={() => onPressLine(commitment)}
@@ -100,8 +99,8 @@ export function CommitmentLane({
         pointerEvents="none"
         style={[
           styles.line,
+          styles.futureLine,
           {
-            backgroundColor: timelineTheme.colors.future,
             height: Math.max(16, clampedFutureBottom - futureTop),
             left: '50%',
             marginLeft: -lineWidth / 2,
@@ -117,7 +116,6 @@ export function CommitmentLane({
             styles.line,
             styles.activeLine,
             {
-              backgroundColor: timelineTheme.colors.active,
               height: Math.max(18, clampedActiveBottom - activeTop),
               left: '50%',
               marginLeft: -lineWidth / 2,
@@ -134,15 +132,15 @@ export function CommitmentLane({
           {
             borderColor: status === 'future' ? timelineTheme.colors.future : timelineTheme.colors.active,
             left: '50%',
-            marginLeft: -6,
-            top: Math.max(0, dueY - 6),
+            marginLeft: -4.5,
+            top: Math.max(0, dueY - 4.5),
           },
         ]}
       />
       {showRunner && (
         <View
           pointerEvents="none"
-          style={[styles.runnerSlot, { bottom: 8, left: '50%', marginLeft: -29 }]}>
+          style={[styles.runnerSlot, { bottom: 10, left: '50%', marginLeft: -24 }]}>
           <Runner fatigue={activeCount} scale={runnerScale} />
         </View>
       )}
@@ -160,28 +158,33 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   line: {
-    borderRadius: 8,
-    opacity: 0.95,
+    borderRadius: 999,
     position: 'absolute',
     zIndex: 4,
   },
+  futureLine: {
+    backgroundColor: '#464646',
+    opacity: 0.66,
+  },
   activeLine: {
+    backgroundColor: '#EAEAEA',
+    opacity: 0.92,
     zIndex: 6,
   },
   deadline: {
     backgroundColor: timelineTheme.colors.background,
-    borderRadius: 6,
-    borderWidth: 2,
-    height: 12,
+    borderRadius: 5,
+    borderWidth: 1.25,
+    height: 9,
     position: 'absolute',
-    width: 12,
+    width: 9,
     zIndex: 7,
   },
   runnerSlot: {
     alignItems: 'center',
-    height: 58,
+    height: 52,
     position: 'absolute',
-    width: 58,
+    width: 48,
     zIndex: 1,
   },
   titleWrap: {
@@ -192,12 +195,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   title: {
-    color: timelineTheme.colors.text,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    lineHeight: 15,
+    color: '#ECECEC',
+    fontSize: 11.5,
+    fontWeight: '600',
+    letterSpacing: 0.15,
+    lineHeight: 13,
     textAlign: 'center',
   },
 });
-
