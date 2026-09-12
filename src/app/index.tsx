@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TimeScaleSelector } from '@/components/TimeScaleSelector';
 import { VerticalTimeline } from '@/components/VerticalTimeline';
-import { timelineTheme } from '@/constants/theme';
 import { createMockCommitments } from '@/data/mockCommitments';
 import { addDays, getVisibleWindow, startOfDay } from '@/domain/workload';
 import type {
@@ -30,6 +29,12 @@ function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function timelineContentHeight(range: TimeRange) {
+  if (range === 'day') return 920;
+  if (range === 'month') return 1480;
+  return 1120;
+}
+
 export default function HomeScreen() {
   const [range, setRange] = useState<TimeRange>('week');
   const insets = useSafeAreaInsets();
@@ -38,6 +43,7 @@ export default function HomeScreen() {
   const visibleWindow = useMemo(() => getVisibleWindow(range, now), [range, now]);
   const bottomPadding = Math.max(16, insets.bottom + 10);
   const topInset = insets.top;
+  const timelineScrollRef = useRef<ScrollView>(null);
 
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState('');
@@ -48,6 +54,13 @@ export default function HomeScreen() {
   const [dueInDays, setDueInDays] = useState('3');
   const [dueHour, setDueHour] = useState('18');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      timelineScrollRef.current?.scrollToEnd({ animated: false });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [range]);
 
   function resetForm() {
     setTitle('');
@@ -107,15 +120,30 @@ export default function HomeScreen() {
     closeAdd();
   }
 
+  function updateCommitment(id: string, patch: Partial<Commitment>) {
+    setCommitments((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
+
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: bottomPadding }]}> 
-      <VerticalTimeline
-        commitments={commitments}
-        now={now}
-        range={range}
-        windowEnd={visibleWindow.end}
-        windowStart={visibleWindow.start}
-      />
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: bottomPadding }]}>
+      <ScrollView
+        ref={timelineScrollRef}
+        bounces
+        contentContainerStyle={styles.timelineScrollContent}
+        onContentSizeChange={() => timelineScrollRef.current?.scrollToEnd({ animated: false })}
+        showsVerticalScrollIndicator={false}
+        style={styles.timelineScroll}>
+        <View style={[styles.timelineCanvas, { height: timelineContentHeight(range) }]}>
+          <VerticalTimeline
+            commitments={commitments}
+            now={now}
+            onUpdateCommitment={updateCommitment}
+            range={range}
+            windowEnd={visibleWindow.end}
+            windowStart={visibleWindow.start}
+          />
+        </View>
+      </ScrollView>
 
       <View pointerEvents="box-none" style={[styles.topOverlay, { paddingTop: topInset + 6 }]}>
         <View pointerEvents="none" style={[styles.overlayMask, { top: -topInset }]} />
@@ -257,6 +285,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     position: 'relative',
   },
+  timelineScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  timelineScrollContent: {
+    flexGrow: 1,
+  },
+  timelineCanvas: {
+    minHeight: 920,
+    width: '100%',
+  },
   topOverlay: {
     alignItems: 'center',
     gap: 10,
@@ -300,11 +339,12 @@ const styles = StyleSheet.create({
   },
   bottomControls: {
     alignItems: 'center',
+    backgroundColor: '#050505',
     borderTopColor: '#171717',
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 0,
     minHeight: 72,
     paddingHorizontal: 16,
     paddingTop: 12,
