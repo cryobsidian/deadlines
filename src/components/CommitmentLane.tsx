@@ -40,7 +40,8 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
 
   const timelineHeight = height + topInset;
   const RUNNER_SLOT_H = 40;
-  const maxBarBottom = timelineHeight - RUNNER_SLOT_H - 17;
+  const RUNNER_BOTTOM_GAP = 28;
+  const maxBarBottom = timelineHeight - RUNNER_SLOT_H - RUNNER_BOTTOM_GAP - 6;
   const clampedFutureBottom = showRunner ? Math.min(futureBottom, maxBarBottom) : futureBottom;
   const clampedActiveBottom = showRunner ? Math.min(activeBottom, maxBarBottom) : activeBottom;
 
@@ -84,7 +85,7 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
       )}
       <View pointerEvents="none" style={[styles.deadline, { borderColor: status === 'future' ? '#4D4D4D' : '#D7D4D0', left: '50%', marginLeft: -3.25, top: Math.max(0, dueY - 3.25) }]} />
       {showRunner && (
-        <View pointerEvents="none" style={[styles.runnerSlot, { bottom: 11, left: '50%', marginLeft: -17 }]}>
+        <View pointerEvents="none" style={[styles.runnerSlot, { bottom: RUNNER_BOTTOM_GAP, left: '50%', marginLeft: -17 }]}>
           <Runner fatigue={activeCount} scale={runnerScale} />
         </View>
       )}
