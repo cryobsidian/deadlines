@@ -16,9 +16,11 @@ export const difficultyWeights: Record<Commitment['difficulty'], number> = {
 
 const baselineThresholds = { busy: 4, strained: 7, overloaded: 10 };
 
+// Capacity is a daily modifier. "Okay" is the neutral baseline; a good day
+// gives the user a little more room, while a low-capacity day reaches strain sooner.
 const capacityThresholds: Record<WorkloadCapacity, { busy: number; strained: number; overloaded: number }> = {
-  good: baselineThresholds,
-  okay: { busy: 3, strained: 6, overloaded: 9 },
+  good: { busy: 5, strained: 8, overloaded: 11 },
+  okay: baselineThresholds,
   low: { busy: 2, strained: 4, overloaded: 7 },
 };
 
