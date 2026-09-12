@@ -17,6 +17,8 @@ export default function HomeScreen() {
   const visibleWindow = useMemo(() => getVisibleWindow(range, now), [range, now]);
   const bottomPadding = Math.max(18, insets.bottom + 14);
 
+  const topInset = insets.top;
+
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { paddingBottom: bottomPadding }]}> 
       <VerticalTimeline
@@ -27,10 +29,10 @@ export default function HomeScreen() {
         windowStart={visibleWindow.start}
       />
 
-      <View pointerEvents="box-none" style={styles.topOverlay}>
-        <View pointerEvents="none" style={styles.overlayMask} />
+      <View pointerEvents="box-none" style={[styles.topOverlay, { paddingTop: topInset + 10 }]}>
+        <View pointerEvents="none" style={[styles.overlayMask, { top: -topInset }]} />
         <Text style={styles.title}>D E A D L I N E S</Text>
-        <Pressable accessibilityLabel="Menu" style={styles.menuButton}>
+        <Pressable accessibilityLabel="Menu" style={[styles.menuButton, { top: topInset + 7 }]}>
           <View style={styles.menuLine} />
           <View style={styles.menuLine} />
           <View style={styles.menuLine} />
@@ -60,21 +62,23 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   topOverlay: {
-    alignItems: 'flex-start',
-    left: 92,
+    alignItems: 'center',
+    gap: 10,
+    left: 0,
+    paddingHorizontal: 16,
     paddingTop: 10,
     position: 'absolute',
-    right: 16,
+    right: 0,
     top: 0,
     zIndex: 30,
   },
   overlayMask: {
     backgroundColor: timelineTheme.colors.background,
     bottom: -10,
-    left: -14,
+    left: 0,
     opacity: 0.96,
     position: 'absolute',
-    right: -16,
+    right: 0,
     top: 0,
   },
   title: {
@@ -83,15 +87,16 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 0,
     lineHeight: 28,
-    marginLeft: 8,
-    textAlign: 'left',
+    paddingHorizontal: 48,
+    textAlign: 'center',
+    width: '100%',
     zIndex: 1,
   },
   menuButton: {
     gap: 5,
     padding: 8,
     position: 'absolute',
-    right: 0,
+    right: 16,
     top: 7,
     zIndex: 2,
   },
@@ -102,11 +107,15 @@ const styles = StyleSheet.create({
   },
   bottomControls: {
     alignItems: 'center',
+    borderTopColor: 'rgba(75, 75, 75, 0.35)',
+    borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 16,
     minHeight: 66,
+    paddingBottom: 4,
     paddingHorizontal: 18,
-    paddingTop: 8,
+    paddingTop: 16,
     zIndex: 20,
   },
   circleButton: {
