@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { timelineTheme } from '@/constants/theme';
 import { getCommitmentStatus, getTimePosition } from '@/domain/workload';
 import type { Commitment, TimeRange } from '@/types/commitment';
-import { Runner } from './Runner';
 
 type Props = {
   commitment: Commitment;
@@ -17,11 +16,19 @@ type Props = {
   onPressLine: (commitment: Commitment) => void;
 };
 
+const categoryAccent: Record<string, string> = {
+  university: '#D9B8A6',
+  work: '#AFC3D7',
+  health: '#A8C9B1',
+  personal: '#C6B5D7',
+  social: '#D8C6A4',
+};
+
 function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: number, topInset: number) {
   return topInset + (1 - getTimePosition(date, windowStart, windowEnd)) * height;
 }
 
-export function CommitmentLane({ commitment, now, windowStart, windowEnd, height, topInset, activeCount, range, onPressLine }: Props) {
+export function CommitmentLane({ commitment, now, windowStart, windowEnd, height, topInset, range, onPressLine }: Props) {
   const status = getCommitmentStatus(commitment, now);
   if (status === 'completed') return null;
 
@@ -34,16 +41,9 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
   const activeBottom = Math.max(dueY, currentY);
 
   const lineWidth = commitment.difficulty === 1 ? 0.9 : commitment.difficulty === 2 ? 1.2 : 1.55;
-  const showRunner = status === 'active' || status === 'overdue';
-  const runnerScale = Math.max(0.7, 0.88 - Math.max(0, activeCount - 1) * 0.03 - commitment.difficulty * 0.01);
   const lineHitSlop = { bottom: 10, left: 14, right: 14, top: 10 };
-
   const timelineHeight = height + topInset;
-  const RUNNER_SLOT_H = 40;
-  const RUNNER_BOTTOM_GAP = 28;
-  const maxBarBottom = timelineHeight - RUNNER_SLOT_H - RUNNER_BOTTOM_GAP - 6;
-  const clampedFutureBottom = showRunner ? Math.min(futureBottom, maxBarBottom) : futureBottom;
-  const clampedActiveBottom = showRunner ? Math.min(activeBottom, maxBarBottom) : activeBottom;
+  const accent = categoryAccent[commitment.category ?? ''] ?? '#9B9894';
 
   const isDay = range === 'day';
   const isMonth = range === 'month';
@@ -53,7 +53,7 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
 
   if (isDay) {
     const barTop = status !== 'future' ? activeTop : futureTop;
-    const barBottom = status !== 'future' ? clampedActiveBottom : clampedFutureBottom;
+    const barBottom = status !== 'future' ? activeBottom : futureBottom;
     const barMid = (barTop + barBottom) / 2;
     const titleTop = Math.max(minVisibleTop, Math.min(barMid - 7, timelineHeight - 24));
     titleWrapStyle = {
@@ -74,21 +74,19 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
   return (
     <View pointerEvents="box-none" style={styles.container}>
       <Pressable hitSlop={lineHitSlop} onPress={() => onPressLine(commitment)} style={[styles.titleWrap, titleWrapStyle]}>
-        <Text ellipsizeMode="tail" numberOfLines={isMonth ? 1 : 2} style={[styles.title, isMonth && styles.monthTitle, titleStyle]}>
-          {commitment.title}
-        </Text>
+        <View style={styles.titleRow}>
+          <View style={[styles.categoryDot, { backgroundColor: accent }]} />
+          <Text ellipsizeMode="tail" numberOfLines={isMonth ? 1 : 2} style={[styles.title, isMonth && styles.monthTitle, titleStyle]}>
+            {commitment.title}
+          </Text>
+        </View>
       </Pressable>
 
-      <View pointerEvents="none" style={[styles.line, styles.futureLine, { height: Math.max(16, clampedFutureBottom - futureTop), left: '50%', marginLeft: -lineWidth / 2, top: futureTop, width: lineWidth }]} />
+      <View pointerEvents="none" style={[styles.line, styles.futureLine, { height: Math.max(16, futureBottom - futureTop), left: '50%', marginLeft: -lineWidth / 2, top: futureTop, width: lineWidth }]} />
       {status !== 'future' && (
-        <View pointerEvents="none" style={[styles.line, styles.activeLine, { height: Math.max(18, clampedActiveBottom - activeTop), left: '50%', marginLeft: -lineWidth / 2, top: activeTop, width: lineWidth }]} />
+        <View pointerEvents="none" style={[styles.line, styles.activeLine, { height: Math.max(18, activeBottom - activeTop), left: '50%', marginLeft: -lineWidth / 2, top: activeTop, width: lineWidth }]} />
       )}
-      <View pointerEvents="none" style={[styles.deadline, { borderColor: status === 'future' ? '#4D4D4D' : '#D7D4D0', left: '50%', marginLeft: -3.25, top: Math.max(0, dueY - 3.25) }]} />
-      {showRunner && (
-        <View pointerEvents="none" style={[styles.runnerSlot, { bottom: RUNNER_BOTTOM_GAP, left: '50%', marginLeft: -17 }]}>
-          <Runner fatigue={activeCount} scale={runnerScale} />
-        </View>
-      )}
+      <View pointerEvents="none" style={[styles.deadline, { borderColor: accent, left: '50%', marginLeft: -3.25, top: Math.max(0, dueY - 3.25) }]} />
     </View>
   );
 }
@@ -98,9 +96,10 @@ const styles = StyleSheet.create({
   line: { borderRadius: 999, position: 'absolute', zIndex: 4 },
   futureLine: { backgroundColor: '#333333', opacity: 0.62 },
   activeLine: { backgroundColor: '#E3E0DC', opacity: 0.92, zIndex: 6 },
-  deadline: { backgroundColor: timelineTheme.colors.background, borderRadius: 4, borderWidth: 1, height: 6.5, position: 'absolute', width: 6.5, zIndex: 7 },
-  runnerSlot: { alignItems: 'center', height: 40, position: 'absolute', width: 34, zIndex: 1 },
+  deadline: { backgroundColor: timelineTheme.colors.background, borderRadius: 4, borderWidth: 1.25, height: 6.5, position: 'absolute', width: 6.5, zIndex: 7 },
   titleWrap: { alignItems: 'center', left: 2, position: 'absolute', right: 2, zIndex: 10 },
-  title: { color: '#E1DEDA', fontSize: 10.25, fontWeight: '600', letterSpacing: 0.02, lineHeight: 11.5, textAlign: 'center' },
+  titleRow: { alignItems: 'center', flexDirection: 'row', gap: 4, maxWidth: '100%' },
+  categoryDot: { borderRadius: 99, height: 4, width: 4 },
+  title: { color: '#E1DEDA', flexShrink: 1, fontSize: 10.25, fontWeight: '600', letterSpacing: 0.02, lineHeight: 11.5, textAlign: 'center' },
   monthTitle: { color: '#C8C5C1', fontSize: 9.25, fontWeight: '600' },
 });
