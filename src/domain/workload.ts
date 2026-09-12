@@ -3,11 +3,33 @@ import type { Commitment, CommitmentStatus, TimeRange, WorkloadBand } from '@/ty
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 
+export type WorkloadCapacity = 'low' | 'okay' | 'good';
+
+let currentCapacity: WorkloadCapacity = 'okay';
+
 export const difficultyWeights: Record<Commitment['difficulty'], number> = {
   1: 1,
   2: 2,
   3: 3,
 };
+
+const capacityThresholds: Record<WorkloadCapacity, { busy: number; strained: number; overloaded: number }> = {
+  good: { busy: 4, strained: 7, overloaded: 10 },
+  okay: { busy: 3, strained: 6, overloaded: 9 },
+  low: { busy: 2, strained: 4, overloaded: 7 },
+};
+
+export function setWorkloadCapacity(capacity: WorkloadCapacity) {
+  currentCapacity = capacity;
+}
+
+export function getWorkloadCapacity() {
+  return currentCapacity;
+}
+
+export function getCapacityThresholds(capacity = currentCapacity) {
+  return capacityThresholds[capacity];
+}
 
 export function addDays(date: Date, days: number) {
   const next = new Date(date);
@@ -74,15 +96,17 @@ export function calculateWorkloadScore(commitments: Commitment[], date: Date) {
 }
 
 export function getWorkloadBand(score: number): WorkloadBand {
-  if (score >= 10) {
+  const thresholds = getCapacityThresholds();
+
+  if (score >= thresholds.overloaded) {
     return 'overloaded';
   }
 
-  if (score >= 7) {
+  if (score >= thresholds.strained) {
     return 'strained';
   }
 
-  if (score >= 4) {
+  if (score >= thresholds.busy) {
     return 'busy';
   }
 
@@ -99,20 +123,21 @@ export function identifyOverloadPeriods(
   commitments: Commitment[],
   windowStart: Date,
   windowEnd: Date,
-  threshold = 7,
+  threshold?: number,
 ): OverloadPeriod[] {
   const periods: OverloadPeriod[] = [];
   let openPeriod: OverloadPeriod | null = null;
   const totalMs = windowEnd.getTime() - windowStart.getTime();
   const stepMs = Math.max(DAY_MS / 2, totalMs / 48);
+  const effectiveThreshold = threshold ?? getCapacityThresholds().strained;
 
   for (let time = windowStart.getTime(); time <= windowEnd.getTime(); time += stepMs) {
     const date = new Date(time);
     const score = calculateWorkloadScore(commitments, date);
 
-    if (score >= threshold && !openPeriod) {
+    if (score >= effectiveThreshold && !openPeriod) {
       openPeriod = { start: date, end: date, score };
-    } else if (score >= threshold && openPeriod) {
+    } else if (score >= effectiveThreshold && openPeriod) {
       openPeriod.end = date;
       openPeriod.score = Math.max(openPeriod.score, score);
     } else if (openPeriod) {
