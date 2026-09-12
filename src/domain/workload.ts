@@ -6,6 +6,7 @@ const HOUR_MS = 60 * 60 * 1000;
 export type WorkloadCapacity = 'low' | 'okay' | 'good';
 
 let currentCapacity: WorkloadCapacity = 'okay';
+let capacityDateKey = localDateKey(new Date());
 
 export const difficultyWeights: Record<Commitment['difficulty'], number> = {
   1: 1,
@@ -13,22 +14,35 @@ export const difficultyWeights: Record<Commitment['difficulty'], number> = {
   3: 3,
 };
 
+const baselineThresholds = { busy: 4, strained: 7, overloaded: 10 };
+
 const capacityThresholds: Record<WorkloadCapacity, { busy: number; strained: number; overloaded: number }> = {
-  good: { busy: 4, strained: 7, overloaded: 10 },
+  good: baselineThresholds,
   okay: { busy: 3, strained: 6, overloaded: 9 },
   low: { busy: 2, strained: 4, overloaded: 7 },
 };
 
-export function setWorkloadCapacity(capacity: WorkloadCapacity) {
+function localDateKey(date: Date) {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+export function isCapacityDate(date: Date) {
+  return localDateKey(date) === capacityDateKey;
+}
+
+export function setWorkloadCapacity(capacity: WorkloadCapacity, forDate = new Date()) {
   currentCapacity = capacity;
+  capacityDateKey = localDateKey(forDate);
 }
 
-export function getWorkloadCapacity() {
-  return currentCapacity;
+export function getWorkloadCapacity(date = new Date()): WorkloadCapacity | null {
+  return isCapacityDate(date) ? currentCapacity : null;
 }
 
-export function getCapacityThresholds(capacity = currentCapacity) {
-  return capacityThresholds[capacity];
+export function getCapacityThresholds(capacity?: WorkloadCapacity | null, date = new Date()) {
+  if (capacity) return capacityThresholds[capacity];
+  if (isCapacityDate(date)) return capacityThresholds[currentCapacity];
+  return baselineThresholds;
 }
 
 export function addDays(date: Date, days: number) {
@@ -57,29 +71,19 @@ export function getVisibleWindow(range: TimeRange, now = new Date()) {
 }
 
 export function getCommitmentStatus(commitment: Commitment, at = new Date()): CommitmentStatus {
-  if (commitment.completedAt) {
-    return 'completed';
-  }
+  if (commitment.completedAt) return 'completed';
 
   const start = new Date(commitment.startAt).getTime();
   const due = new Date(commitment.dueAt).getTime();
   const current = at.getTime();
 
-  if (current > due) {
-    return 'overdue';
-  }
-
-  if (current < start) {
-    return 'future';
-  }
-
+  if (current > due) return 'overdue';
+  if (current < start) return 'future';
   return 'active';
 }
 
 export function isCommitmentActiveOn(commitment: Commitment, date: Date) {
-  if (commitment.completedAt) {
-    return false;
-  }
+  if (commitment.completedAt) return false;
 
   const time = date.getTime();
   return time >= new Date(commitment.startAt).getTime() && time <= new Date(commitment.dueAt).getTime();
@@ -87,29 +91,17 @@ export function isCommitmentActiveOn(commitment: Commitment, date: Date) {
 
 export function calculateWorkloadScore(commitments: Commitment[], date: Date) {
   return commitments.reduce((score, commitment) => {
-    if (!isCommitmentActiveOn(commitment, date)) {
-      return score;
-    }
-
+    if (!isCommitmentActiveOn(commitment, date)) return score;
     return score + difficultyWeights[commitment.difficulty];
   }, 0);
 }
 
-export function getWorkloadBand(score: number): WorkloadBand {
-  const thresholds = getCapacityThresholds();
+export function getWorkloadBand(score: number, date = new Date()): WorkloadBand {
+  const thresholds = getCapacityThresholds(undefined, date);
 
-  if (score >= thresholds.overloaded) {
-    return 'overloaded';
-  }
-
-  if (score >= thresholds.strained) {
-    return 'strained';
-  }
-
-  if (score >= thresholds.busy) {
-    return 'busy';
-  }
-
+  if (score >= thresholds.overloaded) return 'overloaded';
+  if (score >= thresholds.strained) return 'strained';
+  if (score >= thresholds.busy) return 'busy';
   return 'manageable';
 }
 
@@ -129,11 +121,11 @@ export function identifyOverloadPeriods(
   let openPeriod: OverloadPeriod | null = null;
   const totalMs = windowEnd.getTime() - windowStart.getTime();
   const stepMs = Math.max(DAY_MS / 2, totalMs / 48);
-  const effectiveThreshold = threshold ?? getCapacityThresholds().strained;
 
   for (let time = windowStart.getTime(); time <= windowEnd.getTime(); time += stepMs) {
     const date = new Date(time);
     const score = calculateWorkloadScore(commitments, date);
+    const effectiveThreshold = threshold ?? getCapacityThresholds(undefined, date).strained;
 
     if (score >= effectiveThreshold && !openPeriod) {
       openPeriod = { start: date, end: date, score };
@@ -146,18 +138,13 @@ export function identifyOverloadPeriods(
     }
   }
 
-  if (openPeriod) {
-    periods.push(openPeriod);
-  }
-
+  if (openPeriod) periods.push(openPeriod);
   return periods;
 }
 
 export function getTimePosition(date: Date, windowStart: Date, windowEnd: Date) {
   const span = windowEnd.getTime() - windowStart.getTime();
-  if (span <= 0) {
-    return 0;
-  }
+  if (span <= 0) return 0;
 
   const raw = (date.getTime() - windowStart.getTime()) / span;
   return Math.min(1, Math.max(0, raw));
