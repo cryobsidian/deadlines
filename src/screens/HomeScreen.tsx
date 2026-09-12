@@ -73,15 +73,20 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.bottomControls}>
-        <Pressable onPress={() => setShowList(true)} style={styles.circleButton}>
+        <Pressable accessibilityLabel="Open commitments" onPress={() => setShowList(true)} style={styles.actionButton}>
           <View style={styles.listGlyph}>
-            <View style={styles.listDot} /><View style={styles.listBar} />
-            <View style={styles.listDot} /><View style={styles.listBar} />
-            <View style={styles.listDot} /><View style={styles.listBar} />
+            <View style={[styles.listStroke, styles.listStrokeLong]} />
+            <View style={[styles.listStroke, styles.listStrokeMedium]} />
+            <View style={[styles.listStroke, styles.listStrokeShort]} />
           </View>
         </Pressable>
         <CapacityPill onPress={() => setShowCapacity(true)} value={capacity} />
-        <Pressable onPress={() => setShowAdd(true)} style={styles.circleButton}><Text style={styles.plus}>+</Text></Pressable>
+        <Pressable accessibilityLabel="Add commitment" onPress={() => setShowAdd(true)} style={[styles.actionButton, styles.addButton]}>
+          <View style={styles.plusGlyph}>
+            <View style={styles.plusHorizontal} />
+            <View style={styles.plusVertical} />
+          </View>
+        </Pressable>
       </View>
 
       <CapacityCheckIn onChange={setCapacity} onClose={() => setShowCapacity(false)} value={capacity} visible={showCapacity} />
@@ -165,12 +170,17 @@ const styles = StyleSheet.create({
   title: { color: '#F1EFEC', fontSize: 14, fontWeight: '500', letterSpacing: 4.5, lineHeight: 26, textAlign: 'center', width: '100%', zIndex: 1 },
   menuButton: { gap: 4, padding: 8, position: 'absolute', right: 15, zIndex: 2 },
   menuLine: { backgroundColor: '#C8C5C1', height: 1.2, width: 22 },
-  bottomControls: { alignItems: 'center', backgroundColor: '#050505', borderTopColor: '#171717', borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 72, paddingHorizontal: 16, paddingTop: 12 },
-  circleButton: { alignItems: 'center', borderColor: '#4A4A4A', borderRadius: 28, borderWidth: 1, height: 52, justifyContent: 'center', width: 52 },
-  listGlyph: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 4, height: 22, width: 26 },
-  listDot: { backgroundColor: '#D9D6D2', borderRadius: 2, height: 3, width: 3 },
-  listBar: { backgroundColor: '#D9D6D2', height: 1.5, width: 18 },
-  plus: { color: '#E8E5E1', fontSize: 30, fontWeight: '200', lineHeight: 34 },
+  bottomControls: { alignItems: 'center', backgroundColor: '#050505', borderTopColor: '#171717', borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 66, paddingHorizontal: 14, paddingTop: 10 },
+  actionButton: { alignItems: 'center', backgroundColor: '#0A0A0A', borderColor: '#2C2C2C', borderRadius: 23, borderWidth: 1, height: 46, justifyContent: 'center', width: 46 },
+  addButton: { backgroundColor: '#0D0D0D', borderColor: '#3A3A3A' },
+  listGlyph: { alignItems: 'flex-start', gap: 4.5, justifyContent: 'center', width: 20 },
+  listStroke: { backgroundColor: '#D8D5D1', borderRadius: 2, height: 1.4 },
+  listStrokeLong: { width: 20 },
+  listStrokeMedium: { width: 15 },
+  listStrokeShort: { width: 10 },
+  plusGlyph: { alignItems: 'center', height: 18, justifyContent: 'center', position: 'relative', width: 18 },
+  plusHorizontal: { backgroundColor: '#ECE9E5', borderRadius: 2, height: 1.4, position: 'absolute', width: 18 },
+  plusVertical: { backgroundColor: '#ECE9E5', borderRadius: 2, height: 18, position: 'absolute', width: 1.4 },
   sheetOverlay: { backgroundColor: 'rgba(0,0,0,0.58)', flex: 1, justifyContent: 'flex-end' },
   backdrop: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   sheetCard: { backgroundColor: '#101010', borderColor: '#343434', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 18 },
