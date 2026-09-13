@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { timelineTheme } from '@/constants/theme';
 
@@ -9,117 +8,106 @@ type Props = {
 };
 
 export function Runner({ scale = 1, fatigue = 0 }: Props) {
-  const [bob] = useState(() => new Animated.Value(0));
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bob, {
-          duration: 460 + fatigue * 140,
-          toValue: 1,
-          useNativeDriver: true,
-        }),
-        Animated.timing(bob, {
-          duration: 460 + fatigue * 140,
-          toValue: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    animation.start();
-    return () => animation.stop();
-  }, [bob, fatigue]);
-
-  const translateY = bob.interpolate({ inputRange: [0, 1], outputRange: [0, -5] });
-  const lean = bob.interpolate({ inputRange: [0, 1], outputRange: ['-10deg', '8deg'] });
+  const tired = fatigue >= 4;
+  const exhausted = fatigue >= 6;
+  const opacity = exhausted ? 0.48 : tired ? 0.7 : 0.9;
+  const lean = exhausted ? '22deg' : tired ? '13deg' : '-4deg';
 
   return (
-    <Animated.View style={[styles.runner, { transform: [{ scale }, { translateY }] }]}>
-      <Animated.View style={[styles.body, { transform: [{ rotate: lean }] }]}>
+    <View style={[styles.runner, { opacity, transform: [{ scale }] }]}>
+      <View style={[styles.figure, { transform: [{ rotate: lean }] }]}>
         <View style={styles.head} />
         <View style={styles.torso} />
-        <View style={[styles.arm, styles.armBack]} />
-        <View style={[styles.arm, styles.armFront]} />
-        <View style={[styles.leg, styles.legBack]} />
-        <View style={[styles.leg, styles.legFront]} />
-      </Animated.View>
-      <View style={styles.shadow} />
-    </Animated.View>
+        <View style={[styles.arm, styles.armRear, tired && styles.armRearTired]} />
+        <View style={[styles.arm, styles.armFront, tired && styles.armFrontTired]} />
+        <View style={[styles.leg, styles.legRear, exhausted && styles.legRearExhausted]} />
+        <View style={[styles.leg, styles.legFront, exhausted && styles.legFrontExhausted]} />
+      </View>
+      <View style={styles.ground} />
+    </View>
   );
 }
 
-const lineColor = timelineTheme.colors.active;
+const ink = timelineTheme.colors.active;
 
 const styles = StyleSheet.create({
   runner: {
     alignItems: 'center',
-    height: 58,
+    height: 38,
     justifyContent: 'flex-end',
-    width: 54,
+    width: 28,
   },
-  body: {
-    height: 48,
+  figure: {
+    height: 31,
     position: 'relative',
-    width: 40,
+    width: 23,
   },
   head: {
-    backgroundColor: lineColor,
-    borderRadius: 7,
-    height: 13,
-    left: 23,
+    backgroundColor: ink,
+    borderRadius: 4,
+    height: 5.5,
+    left: 14,
     position: 'absolute',
     top: 1,
-    width: 13,
+    width: 5.5,
   },
   torso: {
-    backgroundColor: lineColor,
-    borderRadius: 4,
-    height: 25,
-    left: 18,
+    backgroundColor: ink,
+    borderRadius: 999,
+    height: 14,
+    left: 11.5,
     position: 'absolute',
-    top: 13,
-    width: 8,
+    top: 6.5,
+    transform: [{ rotate: '8deg' }],
+    width: 1.7,
   },
   arm: {
-    backgroundColor: lineColor,
-    borderRadius: 3,
-    height: 22,
+    backgroundColor: ink,
+    borderRadius: 999,
+    height: 12,
     position: 'absolute',
-    top: 16,
-    width: 5,
+    top: 8,
+    width: 1.5,
   },
-  armBack: {
-    left: 12,
-    transform: [{ rotate: '34deg' }],
-  },
-  armFront: {
-    left: 27,
-    transform: [{ rotate: '-45deg' }],
-  },
-  leg: {
-    backgroundColor: lineColor,
-    borderRadius: 3,
-    height: 26,
-    position: 'absolute',
-    top: 33,
-    width: 6,
-  },
-  legBack: {
-    left: 12,
+  armRear: {
+    left: 10,
     transform: [{ rotate: '42deg' }],
   },
-  legFront: {
-    left: 27,
-    transform: [{ rotate: '-34deg' }],
+  armFront: {
+    left: 14,
+    transform: [{ rotate: '-48deg' }],
   },
-  shadow: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 8,
-    height: 2,
-    marginTop: 2,
-    width: 42,
+  armRearTired: {
+    transform: [{ rotate: '18deg' }],
+  },
+  armFrontTired: {
+    transform: [{ rotate: '-18deg' }],
+  },
+  leg: {
+    backgroundColor: ink,
+    borderRadius: 999,
+    height: 14.5,
+    position: 'absolute',
+    top: 18.5,
+    width: 1.7,
+  },
+  legRear: {
+    left: 10,
+    transform: [{ rotate: '34deg' }],
+  },
+  legFront: {
+    left: 14,
+    transform: [{ rotate: '-38deg' }],
+  },
+  legRearExhausted: {
+    transform: [{ rotate: '18deg' }],
+  },
+  legFrontExhausted: {
+    transform: [{ rotate: '-18deg' }],
+  },
+  ground: {
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    height: 1,
+    width: 20,
   },
 });
-
-

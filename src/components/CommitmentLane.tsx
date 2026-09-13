@@ -1,9 +1,9 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { timelineTheme } from '@/constants/theme';
 import { getCommitmentStatus, getTimePosition } from '@/domain/workload';
 import type { Commitment, TimeRange } from '@/types/commitment';
-import { Runner } from './Runner';
 
 type Props = {
   commitment: Commitment;
@@ -17,22 +17,28 @@ type Props = {
   onPressLine: (commitment: Commitment) => void;
 };
 
+const categoryAccent: Record<string, string> = {
+  university: '#E8B59E',
+  work: '#9FC7E8',
+  health: '#9DD2AD',
+  personal: '#CBB1E6',
+  social: '#E0C27D',
+};
+
 function getDropTrackY(date: Date, windowStart: Date, windowEnd: Date, height: number, topInset: number) {
   return topInset + (1 - getTimePosition(date, windowStart, windowEnd)) * height;
 }
 
-export function CommitmentLane({
-  commitment,
-  now,
-  windowStart,
-  windowEnd,
-  height,
-  topInset,
-  activeCount,
-  range,
-  onPressLine,
-}: Props) {
+function titleCase(value?: string) {
+  if (!value) return 'Personal';
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function CommitmentLane({ commitment, now, windowStart, windowEnd, height, topInset, onPressLine }: Props) {
+  const [showPreview, setShowPreview] = useState(false);
   const status = getCommitmentStatus(commitment, now);
+  if (status === 'completed') return null;
+
   const startY = getDropTrackY(new Date(commitment.startAt), windowStart, windowEnd, height, topInset);
   const dueY = getDropTrackY(new Date(commitment.dueAt), windowStart, windowEnd, height, topInset);
   const currentY = getDropTrackY(now, windowStart, windowEnd, height, topInset);
@@ -40,164 +46,66 @@ export function CommitmentLane({
   const futureBottom = Math.max(startY, dueY);
   const activeTop = Math.min(dueY, currentY);
   const activeBottom = Math.max(dueY, currentY);
-  const lineWidth = 2 + commitment.difficulty * 2;
-  const showRunner = status === 'active' || status === 'overdue';
-  const runnerScale = Math.max(0.54, 1 - Math.max(0, activeCount - 1) * 0.1 - commitment.difficulty * 0.04);
-  const lineHitSlop = { bottom: 8, left: 12, right: 12, top: 8 };
-  // Human on bottom first, bar starts from head with spacing
-  const timelineHeight = height + topInset;
-  const RUNNER_SLOT_H = 58;
-  const RUNNER_BOTTOM = 8;
-  const HEAD_OFFSET_FROM_SLOT_TOP = 9;
-  const GAP_ABOVE_HEAD = 14;
-  const maxBarBottom = timelineHeight - RUNNER_SLOT_H - RUNNER_BOTTOM + HEAD_OFFSET_FROM_SLOT_TOP - GAP_ABOVE_HEAD;
-  const clampedFutureBottom = showRunner ? Math.min(futureBottom, maxBarBottom) : futureBottom;
-  const clampedActiveBottom = showRunner ? Math.min(activeBottom, maxBarBottom) : activeBottom;
 
-  // Title placement: day -> middle of bar beside it (no overlap), otherwise on top of bar
-  const isDay = range === 'day';
-  const minVisibleTop = topInset + 74;
-  let titleTop: number;
-  let titleWrapStyle: object;
-  let titleStyle: object = {};
-  if (isDay) {
-    const barTop = status !== 'future' ? activeTop : futureTop;
-    const barBottom = status !== 'future' ? clampedActiveBottom : clampedFutureBottom;
-    const barMid = (barTop + barBottom) / 2;
-    const rawDayTop = barMid - 7; // center around middle (half lineHeight)
-    titleTop = Math.max(minVisibleTop, Math.min(rawDayTop, timelineHeight - 22));
-    // Place text to the right of the centered bar with a clear gap — no overlap
-    const gap = 10;
-    titleWrapStyle = {
-      top: titleTop,
-      left: '50%' as const,
-      marginLeft: lineWidth / 2 + gap,
-      right: 2,
-      alignItems: 'flex-start' as const,
-    };
-    titleStyle = { textAlign: 'left' as const };
-  } else {
-    const rawTitleTop = dueY - 34;
-    const tTop = Math.max(6, Math.min(rawTitleTop, height + topInset - 30));
-    titleTop = rawTitleTop < minVisibleTop ? minVisibleTop : tTop;
-    titleWrapStyle = { top: titleTop, left: 2, right: 2, alignItems: 'center' as const };
-    titleStyle = { textAlign: 'center' as const };
-  }
+  const lineWidth = commitment.difficulty === 1 ? 0.9 : commitment.difficulty === 2 ? 1.2 : 1.55;
+  const timelineHeight = height + topInset;
+  const accent = categoryAccent[commitment.category ?? ''] ?? '#AAA6A1';
+  const interactionTop = status === 'future' ? futureTop : activeTop;
+  const interactionBottom = status === 'future' ? futureBottom : activeBottom;
+  const previewTop = Math.max(topInset + 12, Math.min(dueY - 52, timelineHeight - 74));
 
   return (
     <View pointerEvents="box-none" style={styles.container}>
-      {/* Title is now the trigger — tap text to open details, not bar tip */}
       <Pressable
-        hitSlop={lineHitSlop}
+        accessibilityLabel={`Open ${commitment.title}`}
+        delayLongPress={260}
+        onHoverIn={() => setShowPreview(true)}
+        onHoverOut={() => setShowPreview(false)}
+        onLongPress={() => setShowPreview(true)}
         onPress={() => onPressLine(commitment)}
-        style={[styles.titleWrap, titleWrapStyle]}>
-        <Text numberOfLines={2} style={[styles.title, titleStyle]}>
-          {commitment.title}
-        </Text>
-      </Pressable>
+        onPressOut={() => setShowPreview(false)}
+        style={[
+          styles.interactionTrack,
+          {
+            height: Math.max(26, interactionBottom - interactionTop),
+            left: '50%',
+            marginLeft: -14,
+            top: interactionTop,
+          },
+        ]}
+      />
 
-      <View
-        pointerEvents="none"
-        style={[
-          styles.line,
-          {
-            backgroundColor: timelineTheme.colors.future,
-            height: Math.max(16, clampedFutureBottom - futureTop),
-            left: '50%',
-            marginLeft: -lineWidth / 2,
-            top: futureTop,
-            width: lineWidth,
-          },
-        ]}
-      />
-      {status !== 'future' && (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.line,
-            styles.activeLine,
-            {
-              backgroundColor: timelineTheme.colors.active,
-              height: Math.max(18, clampedActiveBottom - activeTop),
-              left: '50%',
-              marginLeft: -lineWidth / 2,
-              top: activeTop,
-              width: lineWidth,
-            },
-          ]}
-        />
-      )}
-      <View
-        pointerEvents="none"
-        style={[
-          styles.deadline,
-          {
-            borderColor: status === 'future' ? timelineTheme.colors.future : timelineTheme.colors.active,
-            left: '50%',
-            marginLeft: -6,
-            top: Math.max(0, dueY - 6),
-          },
-        ]}
-      />
-      {showRunner && (
-        <View
-          pointerEvents="none"
-          style={[styles.runnerSlot, { bottom: 8, left: '50%', marginLeft: -29 }]}>
-          <Runner fatigue={activeCount} scale={runnerScale} />
+      {showPreview ? (
+        <View pointerEvents="none" style={[styles.preview, { top: previewTop }]}>
+          <View style={[styles.previewDot, { backgroundColor: accent }]} />
+          <View style={styles.previewCopy}>
+            <Text numberOfLines={1} style={styles.previewTitle}>{commitment.title}</Text>
+            <Text numberOfLines={1} style={styles.previewMeta}>{titleCase(commitment.category)} · {titleCase(commitment.priority)}</Text>
+          </View>
         </View>
+      ) : null}
+
+      <View pointerEvents="none" style={[styles.line, styles.futureLine, { height: Math.max(16, futureBottom - futureTop), left: '50%', marginLeft: -lineWidth / 2, top: futureTop, width: lineWidth }]} />
+      {status !== 'future' && (
+        <View pointerEvents="none" style={[styles.line, styles.activeLine, { height: Math.max(18, activeBottom - activeTop), left: '50%', marginLeft: -lineWidth / 2, top: activeTop, width: lineWidth }]} />
       )}
+      <View pointerEvents="none" style={[styles.deadline, { borderColor: accent, left: '50%', marginLeft: -3.75, top: Math.max(0, dueY - 3.75) }]} />
+      <View pointerEvents="none" style={[styles.categoryDot, { backgroundColor: accent, left: '50%', marginLeft: -3, top: Math.max(0, dueY - 17) }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    flex: 1,
-    height: '100%',
-    minWidth: 42,
-    position: 'relative',
-    zIndex: 5,
-  },
-  line: {
-    borderRadius: 8,
-    opacity: 0.95,
-    position: 'absolute',
-    zIndex: 4,
-  },
-  activeLine: {
-    zIndex: 6,
-  },
-  deadline: {
-    backgroundColor: timelineTheme.colors.background,
-    borderRadius: 6,
-    borderWidth: 2,
-    height: 12,
-    position: 'absolute',
-    width: 12,
-    zIndex: 7,
-  },
-  runnerSlot: {
-    alignItems: 'center',
-    height: 58,
-    position: 'absolute',
-    width: 58,
-    zIndex: 1,
-  },
-  titleWrap: {
-    alignItems: 'center',
-    left: 2,
-    position: 'absolute',
-    right: 2,
-    zIndex: 10,
-  },
-  title: {
-    color: timelineTheme.colors.text,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    lineHeight: 15,
-    textAlign: 'center',
-  },
+  container: { alignItems: 'center', flex: 1, height: '100%', minWidth: 42, position: 'relative', zIndex: 5 },
+  interactionTrack: { position: 'absolute', width: 28, zIndex: 12 },
+  line: { borderRadius: 999, position: 'absolute', zIndex: 4 },
+  futureLine: { backgroundColor: '#333333', opacity: 0.62 },
+  activeLine: { backgroundColor: '#E3E0DC', opacity: 0.92, zIndex: 6 },
+  deadline: { backgroundColor: timelineTheme.colors.background, borderRadius: 4, borderWidth: 1.5, height: 7.5, position: 'absolute', width: 7.5, zIndex: 7 },
+  categoryDot: { borderRadius: 99, height: 6, position: 'absolute', width: 6, zIndex: 8 },
+  preview: { alignItems: 'center', backgroundColor: '#111111', borderColor: '#343434', borderRadius: 10, borderWidth: 1, flexDirection: 'row', gap: 7, left: '50%', marginLeft: -54, maxWidth: 132, minWidth: 108, paddingHorizontal: 9, paddingVertical: 7, position: 'absolute', zIndex: 30 },
+  previewDot: { borderRadius: 99, height: 6, width: 6 },
+  previewCopy: { flex: 1, minWidth: 0 },
+  previewTitle: { color: '#F0EDE9', fontSize: 10, fontWeight: '700' },
+  previewMeta: { color: '#7F7F7F', fontSize: 8.5, marginTop: 2 },
 });
-
