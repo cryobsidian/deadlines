@@ -1,12 +1,12 @@
-# Deadlines by [Team Name]
+# Deadlines by Team Code Happens
 
 > **See the pressure coming. Adjust before it hits.**
 
-**Team:** [Member 1], [Member 2]  
+**Team:** Chloe Chok, Daniel Yong, Evan Chong
 **Problem Statement:** Lifestyle Track — Beating the Burnout: Stress & Workload Manager  
 **Video Presentation:** [Unlisted YouTube Link]  
-**Presentation Slides:** [Public Link]  
-**UI Prototype:** [Public Link]
+**Presentation Slides:** https://www.canva.com/design/DAHU9VZ4Qj4/w_xteARCwS-PP3a84dTFcg/edit
+**UI Prototype:** 
 
 ---
 
@@ -87,13 +87,13 @@ Recommended sequence:
 
 | Date | Mentor | Feedback Received | What Was Changed |
 |---|---|---|---|
-| 13 Sep 2026 | [Mentor name] | [Feedback] | [Change / reason for no change] |
+| 13 Sep 2026 | Janelle Tan | [Feedback] | [Change / reason for no change] |
 
 ---
 
 # 3. Design & Prototype
 
-**UI Prototype:** [Public Link]
+**UI Prototype:** 
 
 The prototype deliberately keeps the timeline as the primary surface instead of surrounding the user with dashboard cards. Task labels stay visually quiet until interaction, while pressure zones and decisions receive stronger visual priority.
 
@@ -174,26 +174,19 @@ The rebalancing layer then looks for safer movable commitments using flexibility
 ## System Architecture
 
 ```text
-Manual Input                  Future Sources
-                                  Outlook / Teams / Calendar
-     │                                  │
-     └──────────────┬───────────────────┘
-                    ▼
-           Unified Commitments
-                    │
-       ┌────────────┴────────────┐
-       ▼                         ▼
-Supabase persistence      TypeScript workload engine
-                          - scoring
-                          - capacity thresholds
-                          - pressure detection
-                          - rebalance preview
-                          - recovery windows
-                                   │
-                                   ▼
-                         React Native / Expo UI
-                                   │
-                    Timeline / Decisions / Recovery
+                   DEADLINES MOBILE APP
+              React Native + Expo + TypeScript
+                          │
+              ┌───────────┼───────────┐
+              │           │           │
+              ▼           ▼           ▼
+       ON-DEVICE       SUPABASE     FASTAPI
+       WORKLOAD        Auth + DB    [Optional /
+        ENGINE                      Next Phase]
+              │                       │
+      scoring / pressure        External APIs
+      capacity / rebalance      Outlook / Teams
+      recovery decisions        Calendar / LMS
 ```
 
 ## Build Plan & Scope
@@ -242,14 +235,3 @@ npx expo start --web
 ```
 
 ---
-
-## Submission Checklist
-
-- [ ] Team name and member names added
-- [ ] 3–5 minute unlisted YouTube presentation linked
-- [ ] Presentation slides linked
-- [ ] Ideation boards embedded/linked
-- [ ] Mentor consultation table completed with real feedback
-- [ ] Public prototype link verified in incognito/private browsing
-- [ ] 4–8 key prototype screenshots added with captions
-- [ ] All README links checked before official submission
