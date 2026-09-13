@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   topOverlay: { alignItems: 'center', gap: 7, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
   mask: { backgroundColor: '#050505', bottom: -10, left: 0, opacity: 0.97, position: 'absolute', right: 0 },
   title: { color: '#F1EFEC', fontSize: 14, fontWeight: '500', letterSpacing: 4.5, lineHeight: 26, textAlign: 'center', width: '100%', zIndex: 1 },
-  helpButton: { alignItems: 'center', backgroundColor: '#0A0A0A', borderColor: '#2A2A2A', borderRadius: 14, borderWidth: 1, height: 28, justifyContent: 'center', position: 'absolute', right: 52, width: 28, zIndex: 2 },
+  helpButton: { alignItems: 'center', backgroundColor: '#0A0A0A', borderColor: '#2A2A2A', borderRadius: 14, borderWidth: 1, height: 28, justifyContent: 'center', position: 'absolute', right: 64, width: 28, zIndex: 2 },
   helpText: { color: '#EAE7E3', fontSize: 14, fontWeight: '800', lineHeight: 16, textAlign: 'center' },
   menuButton: { gap: 4, padding: 8, position: 'absolute', right: 15, zIndex: 2 },
   menuLine: { backgroundColor: '#C8C5C1', height: 1.2, width: 22 },
