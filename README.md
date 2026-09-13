@@ -8,7 +8,7 @@
 
 **Team:** Chloe Chok, Daniel Yong, Evan Chong  
 **Problem Statement:** Lifestyle Track — Beating the Burnout: Stress & Workload Manager  
-**Video Presentation:** [Unlisted YouTube Link — add before submission]  
+**Video Presentation:** [View Youtube Presentation]()  
 **Presentation Slides:** [View Canva presentation](https://www.canva.com/design/DAHU9VZ4Qj4/w_xteARCwS-PP3a84dTFcg/edit)  
 **UI Prototype:** [prototype screenshots](#3-design--prototype)
 
@@ -142,8 +142,6 @@ Sources: Notion (n.d.-a). *Timeline view databases in Notion.* Notion Help Cente
 ---
 
 # 3. Design & Prototype
-
-**Public Prototype Link:** [Add public Figma / Canva / prototype link before submission]
 
 The prototype deliberately keeps the timeline as the primary surface instead of surrounding the user with dashboard cards. Task labels stay visually quiet until interaction, while pressure zones and decisions receive stronger visual priority.
 
