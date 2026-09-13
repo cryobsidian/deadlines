@@ -8,7 +8,7 @@
 
 **Team:** Chloe Chok, Daniel Yong, Evan Chong  
 **Problem Statement:** Lifestyle Track — Beating the Burnout: Stress & Workload Manager  
-**Video Presentation:** [View Youtube Presentation]()  
+**Video Presentation:** [View Youtube Presentation](https://youtu.be/vPrdtvjB_Mo)  
 **Presentation Slides:** [View Canva presentation](https://www.canva.com/design/DAHU9VZ4Qj4/w_xteARCwS-PP3a84dTFcg/edit)  
 **UI Prototype:** [prototype screenshots](#3-design--prototype)
 
