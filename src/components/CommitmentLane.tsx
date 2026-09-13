@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { timelineTheme } from '@/constants/theme';
 import { getCommitmentStatus, getTimePosition } from '@/domain/workload';
 import type { Commitment, TimeRange } from '@/types/commitment';
 
@@ -89,8 +88,57 @@ export function CommitmentLane({ commitment, now, windowStart, windowEnd, height
       {status !== 'future' && (
         <View pointerEvents="none" style={[styles.line, styles.activeLine, { height: Math.max(18, activeBottom - activeTop), left: '50%', marginLeft: -lineWidth / 2, top: activeTop, width: lineWidth }]} />
       )}
-      <View pointerEvents="none" style={[styles.deadline, { borderColor: accent, left: '50%', marginLeft: -3.75, top: Math.max(0, dueY - 3.75) }]} />
-      <View pointerEvents="none" style={[styles.categoryDot, { backgroundColor: accent, left: '50%', marginLeft: -3, top: Math.max(0, dueY - 17) }]} />
+      {/* pole tip + horizontal finish cap */}
+      <View
+        pointerEvents="none"
+        style={[
+          styles.poleTip,
+          {
+            backgroundColor: '#EAE7E3',
+            left: '50%',
+            marginLeft: -lineWidth / 2,
+            top: Math.max(0, dueY - 4),
+            width: lineWidth,
+          },
+        ]}
+      />
+      <View pointerEvents="none" style={[styles.finishLine, { backgroundColor: '#EAE7E3', left: '50%', marginLeft: -7, top: Math.max(0, dueY - 0.9) }]} />
+      {/* centered finish-line flag — black/white checkered, with V notch */}
+      <View
+        pointerEvents="none"
+        style={[
+          styles.finishFlag,
+          {
+            left: '50%',
+            marginLeft: -10.25,
+            top: Math.max(0, dueY - 10.5),
+          },
+        ]}>
+        <View style={styles.flagInner}>
+          <View style={styles.flagRow}>
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#111111' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#111111' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+          </View>
+          <View style={styles.flagRow}>
+            <View style={[styles.flagCell, { backgroundColor: '#111111' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#111111' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#111111' }]} />
+          </View>
+          <View style={styles.flagRow}>
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#111111' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#111111' }]} />
+            <View style={[styles.flagCell, { backgroundColor: '#F1EFEC' }]} />
+          </View>
+        </View>
+        <View style={styles.flagNotch} />
+      </View>
     </View>
   );
 }
@@ -101,8 +149,35 @@ const styles = StyleSheet.create({
   line: { borderRadius: 999, position: 'absolute', zIndex: 4 },
   futureLine: { backgroundColor: '#333333', opacity: 0.62 },
   activeLine: { backgroundColor: '#E3E0DC', opacity: 0.92, zIndex: 6 },
-  deadline: { backgroundColor: timelineTheme.colors.background, borderRadius: 4, borderWidth: 1.5, height: 7.5, position: 'absolute', width: 7.5, zIndex: 7 },
-  categoryDot: { borderRadius: 99, height: 6, position: 'absolute', width: 6, zIndex: 8 },
+  poleTip: { borderRadius: 999, height: 6, position: 'absolute', zIndex: 9 },
+  finishLine: { borderRadius: 1, height: 1.6, position: 'absolute', width: 14, zIndex: 9 },
+  finishFlag: {
+    backgroundColor: '#0C0C0C',
+    borderColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 1.2,
+    borderWidth: 0.7,
+    height: 10.5,
+    overflow: 'hidden',
+    position: 'absolute',
+    width: 20.5,
+    zIndex: 10,
+  },
+  flagInner: { flex: 1, paddingRight: 1.5 },
+  flagRow: { flexDirection: 'row', flex: 1 },
+  flagCell: { flex: 1 },
+  flagNotch: {
+    backgroundColor: '#050505',
+    borderColor: 'rgba(255,255,255,0.18)',
+    borderLeftWidth: 0.7,
+    borderTopWidth: 0.7,
+    height: 7,
+    marginTop: -3.5,
+    position: 'absolute',
+    right: -3.8,
+    top: '50%',
+    transform: [{ rotate: '45deg' }],
+    width: 7,
+  },
   preview: { alignItems: 'center', backgroundColor: '#111111', borderColor: '#343434', borderRadius: 10, borderWidth: 1, flexDirection: 'row', gap: 7, left: '50%', marginLeft: -54, maxWidth: 132, minWidth: 108, paddingHorizontal: 9, paddingVertical: 7, position: 'absolute', zIndex: 30 },
   previewDot: { borderRadius: 99, height: 6, width: 6 },
   previewCopy: { flex: 1, minWidth: 0 },
