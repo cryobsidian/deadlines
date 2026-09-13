@@ -133,11 +133,11 @@ Sources: Notion (n.d.-a). *Timeline view databases in Notion.* Notion Help Cente
 
 ## 2.3 Mentor Consultation
 
-**TODO:** Fill this with the actual consultation. Do not invent mentor feedback.
-
 | Date | Mentor | Feedback Received | What Was Changed |
-|---|---|---|---|
-| 13 Sep 2026 | Janelle Tan | [Feedback] | [Change / reason for no change] |
+| --- | --- | --- | --- |
+| 13 Sep 2026 | Janelle Tan | Design is innvoative but can be confusing at first | Refine the UI design to be more intuitive. Consider to add on-board tutorial and make it always accessible at any given point |
+| 13 Sep 2026 | Janelle Tan | Presentation slides focus on Deadlines app itself, not so on the build plan | Changed presentation script to focus more for Deadlines |
+| 13 Sep 2026 | Janelle Tan | Student might forget to update their energy, tireness level in Deadlines app | Make the energy updating system to be automated. Consider using pop-up to inform students to update their energy level |
 
 ---
 
