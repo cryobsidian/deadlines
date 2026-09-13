@@ -1,13 +1,17 @@
 # Deadlines by Team Code Happens
-![alt text](image-4.png)
+
+<p align="center">
+  <img src="image-4.png" alt="Deadlines logo" width="220" />
+</p>
+
 > **See the pressure coming. Adjust before it hits.**
 
-**Team:** Chloe Chok, Daniel Yong, Evan Chong
+**Team:** Chloe Chok, Daniel Yong, Evan Chong  
 **Problem Statement:** Lifestyle Track — Beating the Burnout: Stress & Workload Manager  
-**Video Presentation:** [Unlisted YouTube Link]  
-**Presentation Slides:** https://www.canva.com/design/DAHU9VZ4Qj4/w_xteARCwS-PP3a84dTFcg/edit
-**UI Prototype:** 
-![alt text](image.png)![alt text](image-1.png)![alt text](image-2.png)![alt text](image-3.png)
+**Video Presentation:** [Unlisted YouTube Link — add before submission]  
+**Presentation Slides:** [View Canva presentation](https://www.canva.com/design/DAHU9VZ4Qj4/w_xteARCwS-PP3a84dTFcg/edit)  
+**UI Prototype:** [Add public prototype link before submission](#3-design--prototype)
+
 ---
 
 # 1. Project Overview
@@ -93,9 +97,22 @@ Recommended sequence:
 
 # 3. Design & Prototype
 
-**UI Prototype:** 
+**Public Prototype Link:** [Add public Figma / Canva / prototype link before submission]
 
 The prototype deliberately keeps the timeline as the primary surface instead of surrounding the user with dashboard cards. Task labels stay visually quiet until interaction, while pressure zones and decisions receive stronger visual priority.
+
+### Prototype Screens
+
+<table>
+  <tr>
+    <td align="center"><img src="image.png" alt="Deadlines timeline view" width="240" /><br/><sub><b>Workload Timeline</b><br/>Upcoming commitments and pressure zones.</sub></td>
+    <td align="center"><img src="image-1.png" alt="Deadlines day view" width="240" /><br/><sub><b>Day View</b><br/>Focused view of the student's current workload.</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="image-2.png" alt="Deadlines interaction view" width="240" /><br/><sub><b>Pressure Interaction</b><br/>Inspect the commitments contributing to pressure.</sub></td>
+    <td align="center"><img src="image-3.png" alt="Deadlines decision view" width="240" /><br/><sub><b>Decision Support</b><br/>Preview adjustments before applying them.</sub></td>
+  </tr>
+</table>
 
 ### Key Prototype Interactions
 
@@ -105,16 +122,6 @@ The prototype deliberately keeps the timeline as the primary surface instead of 
 4. **Rebalancing preview:** preview workload before → after moving a safer flexible commitment, then explicitly apply it.
 5. **Recovery protection:** identify lower-load time after a pressure period and protect it instead of automatically filling it.
 6. **Commitment management:** add commitments with due date/time, category and priority; inspect details and mark completed work so it leaves the active timeline.
-
-**TODO before submission:** Add 4–8 key screenshots with captions, as requested in the official template.
-
-```md
-![Timeline](docs/screens/timeline.png)
-*The timeline forecasts workload pressure across upcoming commitments.*
-
-![Pressure Decision](docs/screens/pressure-decision.png)
-*Users can inspect a pressure period and preview a realistic adjustment before applying it.*
-```
 
 ---
 
@@ -151,11 +158,12 @@ Deadlines is not primarily a task manager, calendar or stress journal. Its centr
 
 | Layer | Technology | Why / constraints |
 |---|---|---|
-| Frontend | **React Native + Expo 57 + TypeScript** | Mobile-first single codebase and fast hackathon iteration with web preview. Native behaviour still requires device testing. |
+| Mobile client | **React Native + Expo 57 + TypeScript** | One mobile-first codebase for iOS and Android, with access to native components and Expo tooling. |
 | Workload logic | **Deterministic TypeScript engine** | Explainable, testable workload scoring without depending on opaque AI output. |
 | Backend/API | **FastAPI (Python), planned service layer** | Suitable for later automation, integrations and advanced processing. Core prototype calculations remain local. |
 | Database/Auth | **Supabase / PostgreSQL** | Practical hosted persistence/auth foundation with low prototype setup overhead. |
 | Integrations | **Outlook / Teams / calendar APIs — planned** | Reduces duplicate manual entry; OAuth, permissions and provider normalisation remain future integration work. |
+| Mobile build & distribution | **Expo Application Services (EAS)** | Produces native Android/iOS builds for device testing and future store distribution. |
 
 ## Workload Engine
 
@@ -202,7 +210,7 @@ The rebalancing layer then looks for safer movable commitments using flexibility
 - Pressure-zone explanation
 - What-if rebalancing preview and apply action
 - Recovery-window protection interaction
-- Expo web preview for demonstration
+- Expo development build / physical-device demonstration
 
 ### Next Build Phase
 
@@ -213,7 +221,7 @@ The rebalancing layer then looks for safer movable commitments using flexibility
 - Native workload-change notifications
 - Home/Lock Screen widgets and quick actions
 - Stronger recovery/recommendation rules
-- Device testing and accessibility refinement
+- EAS preview builds, wider device testing and accessibility refinement
 
 ### Scope Decision
 
@@ -223,15 +231,15 @@ We intentionally did **not** build an AI chatbot, full calendar replacement, cli
 
 ## Running the Prototype
 
+Install dependencies and start the Expo development server:
+
 ```bash
 npm install
 npx expo start
 ```
 
-For web preview:
+Open the project on an iOS or Android device through Expo Go / an Expo development build.
 
-```bash
-npx expo start --web
-```
+For a future installable device build, Deadlines is designed to use **Expo Application Services (EAS)** to produce native Android and iOS builds.
 
 ---
