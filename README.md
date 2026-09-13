@@ -66,7 +66,7 @@ The core loop is **See → Understand → Adjust → Recover**.
 
 ## 2.2 Ideation Boards
 
-**TODO before submission:** Embed the team's actual ideation board(s) here. The board should show the evolution, not only the final UI.
+**TODO before submission:** 
 
 Recommended sequence:
 
@@ -87,7 +87,7 @@ Recommended sequence:
 
 ## 2.3 Mentor Consultation
 
-**TODO:** Fill this with the actual consultation. Do not invent mentor feedback.
+**TODO:** 
 
 | Date | Mentor | Feedback Received | What Was Changed |
 |---|---|---|---|
@@ -96,8 +96,6 @@ Recommended sequence:
 ---
 
 # 3. Design & Prototype
-
-**Public Prototype Link:** [Add public Figma / Canva / prototype link before submission]
 
 The prototype deliberately keeps the timeline as the primary surface instead of surrounding the user with dashboard cards. Task labels stay visually quiet until interaction, while pressure zones and decisions receive stronger visual priority.
 
