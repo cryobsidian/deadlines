@@ -47,6 +47,8 @@ export default function HomeScreen() {
   const [capacity, setCapacity] = useState<DailyCapacity>('okay');
   const [showCapacity, setShowCapacity] = useState(false);
   const [showDecision, setShowDecision] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialPage, setTutorialPage] = useState(0);
   const [protectedRecovery, setProtectedRecovery] = useState<ProtectedRecoveryWindow | null>(null);
 
   setWorkloadCapacity(capacity);
@@ -109,6 +111,9 @@ export default function HomeScreen() {
       <View pointerEvents="box-none" style={[styles.topOverlay, { paddingTop: insets.top + 6 }]}>
         <View pointerEvents="none" style={[styles.mask, { top: -insets.top }]} />
         <Text style={styles.title}>DEADLINES</Text>
+        <Pressable accessibilityLabel="Open tutorial" onPress={() => { setTutorialPage(0); setShowTutorial(true); }} style={[styles.helpButton, { top: insets.top + 4 }]}>
+          <Text style={styles.helpText}>?</Text>
+        </Pressable>
         <Pressable onPress={() => setShowMenu(true)} style={[styles.menuButton, { top: insets.top + 4 }]}>
           <View style={styles.menuLine} /><View style={styles.menuLine} /><View style={styles.menuLine} />
         </Pressable>
@@ -134,6 +139,133 @@ export default function HomeScreen() {
 
       <CapacityCheckIn onChange={handleCapacityChange} onClose={() => setShowCapacity(false)} value={capacity} visible={showCapacity} />
       <CapacityDecisionSheet capacity={capacity} commitments={commitments} now={now} onClose={() => setShowDecision(false)} onMoveEarlier={moveCommitmentEarlier} onProtectRecovery={setProtectedRecovery} visible={showDecision} />
+
+      <Modal animationType="fade" onRequestClose={() => setShowTutorial(false)} statusBarTranslucent transparent visible={showTutorial}>
+        <View style={styles.tutorialOverlay}>
+          <Pressable onPress={() => setShowTutorial(false)} style={styles.backdrop} />
+          <View style={styles.tutorialCard}>
+            <View style={styles.grabber} />
+            <View style={styles.tutorialHeader}>
+              <View style={styles.tutorialHeaderLeft}>
+                <Text style={styles.tutorialTitle}>How to use Deadlines</Text>
+                <Text style={styles.tutorialCounter}>{tutorialPage + 1} / 6</Text>
+              </View>
+              <Pressable accessibilityLabel="Close tutorial" onPress={() => setShowTutorial(false)}><Text style={styles.close}>×</Text></Pressable>
+            </View>
+
+            <View style={styles.tutorialTabs}>
+              {[
+                { key: 'Lines', label: 'Lines' },
+                { key: 'Runner', label: 'Runner' },
+                { key: 'Energy', label: 'Energy' },
+                { key: 'Pressure', label: 'Pressure' },
+                { key: 'Recovery', label: 'Recovery' },
+                { key: 'Manage', label: 'Manage' },
+              ].map((tab, idx) => (
+                <Pressable key={tab.key} onPress={() => setTutorialPage(idx)} style={[styles.tutorialTab, tutorialPage === idx && styles.tutorialTabActive]}>
+                  <Text style={[styles.tutorialTabText, tutorialPage === idx && styles.tutorialTabTextActive]}>{tab.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.tutorialBody}>
+              {tutorialPage === 0 && (
+                <View style={styles.tutorialSection}>
+                  <Text style={styles.tutorialSectionEyebrow}>SECTION 1 · THE TIMELINE</Text>
+                  <Text style={styles.tutorialSectionTitle}>White vs grey, flag on top</Text>
+                  <Text style={styles.tutorialSectionDesc}>Each vertical pole is one commitment from start to deadline. Colour tells you its state.</Text>
+                  <View style={styles.tutorialVisual}>
+                    <View style={styles.legendRow}><View style={[styles.legendSwatch, { backgroundColor: '#EAE7E3' }]} /><Text style={styles.legendText}><Text style={styles.legendBold}>White line</Text> — ongoing (active now, counts toward workload)</Text></View>
+                    <View style={styles.legendRow}><View style={[styles.legendSwatch, { backgroundColor: '#333333' }]} /><Text style={styles.legendText}><Text style={styles.legendBold}>Grey line</Text> — upcoming (future, not yet started)</Text></View>
+                    <View style={styles.legendRow}><View style={[styles.legendFlag]}><View style={styles.miniFlagRow}><View style={[styles.miniCell, { backgroundColor: '#F1EFEC' }]} /><View style={[styles.miniCell, { backgroundColor: '#111' }]} /><View style={[styles.miniCell, { backgroundColor: '#F1EFEC' }]} /></View><View style={styles.miniFlagRow}><View style={[styles.miniCell, { backgroundColor: '#111' }]} /><View style={[styles.miniCell, { backgroundColor: '#F1EFEC' }]} /><View style={[styles.miniCell, { backgroundColor: '#111' }]} /></View></View><Text style={styles.legendText}><Text style={styles.legendBold}>Checkered flag + cap</Text> — deadline at the tip, centered on the pole</Text></View>
+                  </View>
+                  <Text style={styles.tutorialHint}>Thicker pole = harder (1 thin · 2 medium · 3 thick). Tap a pole to see its details.</Text>
+                </View>
+              )}
+              {tutorialPage === 1 && (
+                <View style={styles.tutorialSection}>
+                  <Text style={styles.tutorialSectionEyebrow}>SECTION 2 · THE HUMAN</Text>
+                  <Text style={styles.tutorialSectionTitle}>The runner is you</Text>
+                  <Text style={styles.tutorialSectionDesc}>Left gutter, just right of the dates. It mirrors live pressure instantly.</Text>
+                  <View style={styles.tutorialVisual}>
+                    <View style={styles.healthRow}><View style={styles.healthDotHealthy} /><Text style={styles.legendText}><Text style={styles.legendBold}>Healthy — Manageable / Busy</Text>: upright (−4°), bright (opacity 0.9)</Text></View>
+                    <View style={styles.healthRow}><View style={styles.healthDotTired} /><Text style={styles.legendText}><Text style={styles.legendBold}>Strained</Text>: leans 13°, fades to 0.7</Text></View>
+                    <View style={styles.healthRow}><View style={styles.healthDotExhausted} /><Text style={styles.legendText}><Text style={styles.legendBold}>Overloaded</Text>: hunches 22°, dims to 0.48</Text></View>
+                  </View>
+                  <Text style={styles.tutorialHint}>Watch the lean and fade: healthy → tired → unhealthy as workload climbs.</Text>
+                </View>
+              )}
+              {tutorialPage === 2 && (
+                <View style={styles.tutorialSection}>
+                  <Text style={styles.tutorialSectionEyebrow}>SECTION 3 · TODAY'S ENERGY</Text>
+                  <Text style={styles.tutorialSectionTitle}>Bottom middle pill</Text>
+                  <Text style={styles.tutorialSectionDesc}>Tap TODAY · RUNNING LOW / OKAY / GOOD (bottom center) to set today's capacity. Not a mood diary — it tunes how strict today's pressure feels.</Text>
+                  <View style={styles.tutorialVisual}>
+                    <View style={styles.energyRow}><View style={[styles.energyDot, { backgroundColor: '#F08A78' }]} /><Text style={styles.legendText}><Text style={styles.legendBold}>Running low</Text>: busy 2 · strained 4 · overloaded 7</Text></View>
+                    <View style={styles.energyRow}><View style={[styles.energyDot, { backgroundColor: '#969696' }]} /><Text style={styles.legendText}><Text style={styles.legendBold}>Okay</Text>: 4 · 7 · 10 (baseline)</Text></View>
+                    <View style={styles.energyRow}><View style={[styles.energyDot, { backgroundColor: '#8FAF95' }]} /><Text style={styles.legendText}><Text style={styles.legendBold}>Good</Text>: 5 · 8 · 11 (roomier)</Text></View>
+                  </View>
+                  <Text style={styles.tutorialHint}>Only today changes — future days keep the normal forecast. Low days hit strain sooner.</Text>
+                </View>
+              )}
+              {tutorialPage === 3 && (
+                <View style={styles.tutorialSection}>
+                  <Text style={styles.tutorialSectionEyebrow}>SECTION 4 · PRESSURE & ADJUST</Text>
+                  <Text style={styles.tutorialSectionTitle}>High-pressure zones</Text>
+                  <Text style={styles.tutorialSectionDesc}>Red blocks = where 3-5 commitments converge. Tap a block to drill down.</Text>
+                  <View style={styles.tutorialVisual}>
+                    <View style={styles.bulletRow}><View style={styles.bulletDot} /><Text style={styles.legendText}>See which commitments cause it, sorted by priority & difficulty</Text></View>
+                    <View style={styles.bulletRow}><View style={styles.bulletDot} /><Text style={styles.legendText}>Preview the move before you commit: <Text style={styles.legendBold}>BEFORE 8 OVERLOADED → AFTER 5 STRAINED</Text></Text></View>
+                    <View style={styles.bulletRow}><View style={styles.bulletDot} /><Text style={styles.legendText}>Only flexible / droppable work is suggested; fixed stays put</Text></View>
+                  </View>
+                  <Text style={styles.tutorialHint}>Use Preview → Apply inside the pressure sheet. Change is 24h earlier, skipping protected recovery.</Text>
+                </View>
+              )}
+              {tutorialPage === 4 && (
+                <View style={styles.tutorialSection}>
+                  <Text style={styles.tutorialSectionEyebrow}>SECTION 5 · RECOVERY</Text>
+                  <Text style={styles.tutorialSectionTitle}>3 hours, protected</Text>
+                  <Text style={styles.tutorialSectionDesc}>After the nearest peak, Deadlines scans 7 days ahead for the first stable window.</Text>
+                  <View style={styles.tutorialVisual}>
+                    <View style={styles.bulletRow}><View style={[styles.bulletDot, { backgroundColor: '#8FAF95' }]} /><Text style={styles.legendText}>Window = <Text style={styles.legendBold}>3 hours</Text> (start → middle +1.5h → end) all below Busy and no critical hard work</Text></View>
+                    <View style={styles.bulletRow}><View style={[styles.bulletDot, { backgroundColor: '#8FAF95' }]} /><Text style={styles.legendText}>Shown as green <Text style={styles.legendBold}>RECOVERY · PROTECTED</Text> marker on the timeline</Text></View>
+                    <View style={styles.bulletRow}><View style={[styles.bulletDot, { backgroundColor: '#8FAF95' }]} /><Text style={styles.legendText}>Tap <Text style={styles.legendBold}>Protect this time</Text> — future moves will avoid filling it</Text></View>
+                  </View>
+                  <Text style={styles.tutorialHint}>Recovery is found in 3h steps (3h, 6h, 9h... ahead) until stable. Guard it, don’t refill.</Text>
+                </View>
+              )}
+              {tutorialPage === 5 && (
+                <View style={styles.tutorialSection}>
+                  <Text style={styles.tutorialSectionEyebrow}>SECTION 6 · MANAGE</Text>
+                  <Text style={styles.tutorialSectionTitle}>List & add</Text>
+                  <Text style={styles.tutorialSectionDesc}>Bottom bar holds your two daily tools.</Text>
+                  <View style={styles.tutorialVisual}>
+                    <View style={styles.legendRow}><View style={styles.manageIcon}><View style={[styles.listStroke, { width: 10 }]} /><View style={[styles.listStroke, { width: 14 }]} /><View style={[styles.listStroke, { width: 8 }]} /></View><Text style={styles.legendText}><Text style={styles.legendBold}>Bottom left</Text> — list all commitments: active with due dates → tap for details & <Text style={styles.legendBold}>Mark as complete</Text>; expand Completed to Restore</Text></View>
+                    <View style={styles.legendRow}><View style={styles.manageIconPlus}><View style={styles.plusHorizontalMini} /><View style={styles.plusVerticalMini} /></View><Text style={styles.legendText}><Text style={styles.legendBold}>Bottom right (+)</Text> — add commitment: title, category, priority, difficulty 1-3, flexibility (fixed/flexible/droppable), start & due</Text></View>
+                  </View>
+                  <Text style={styles.tutorialHint}>Switch DAY / WEEK / MONTH at the top. The forecast pill (top, next to time scale) shows live score · band.</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.tutorialNav}>
+              <View style={styles.tutorialDots}>
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <View key={i} style={[styles.tutorialDot, tutorialPage === i && styles.tutorialDotActive]} />
+                ))}
+              </View>
+              <View style={styles.tutorialNavButtons}>
+                <Pressable disabled={tutorialPage === 0} onPress={() => setTutorialPage((p) => Math.max(0, p - 1))} style={[styles.tutorialBack, tutorialPage === 0 && styles.tutorialBackDisabled]}><Text style={[styles.tutorialBackText, tutorialPage === 0 && styles.tutorialBackTextDisabled]}>Back</Text></Pressable>
+                {tutorialPage < 5 ? (
+                  <Pressable onPress={() => setTutorialPage((p) => Math.min(5, p + 1))} style={styles.tutorialNext}><Text style={styles.tutorialNextText}>Next</Text></Pressable>
+                ) : (
+                  <Pressable onPress={() => setShowTutorial(false)} style={styles.tutorialNext}><Text style={styles.tutorialNextText}>Got it</Text></Pressable>
+                )}
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <AddCommitmentModal now={now} onAdd={(commitment) => setCommitments((current) => [...current, commitment])} onClose={() => setShowAdd(false)} visible={showAdd} />
 
@@ -240,6 +372,8 @@ const styles = StyleSheet.create({
   topOverlay: { alignItems: 'center', gap: 7, left: 0, paddingHorizontal: 20, position: 'absolute', right: 0, top: 0, zIndex: 30 },
   mask: { backgroundColor: '#050505', bottom: -10, left: 0, opacity: 0.97, position: 'absolute', right: 0 },
   title: { color: '#F1EFEC', fontSize: 14, fontWeight: '500', letterSpacing: 4.5, lineHeight: 26, textAlign: 'center', width: '100%', zIndex: 1 },
+  helpButton: { alignItems: 'center', backgroundColor: '#0A0A0A', borderColor: '#2A2A2A', borderRadius: 14, borderWidth: 1, height: 28, justifyContent: 'center', position: 'absolute', right: 52, width: 28, zIndex: 2 },
+  helpText: { color: '#EAE7E3', fontSize: 14, fontWeight: '800', lineHeight: 16, textAlign: 'center' },
   menuButton: { gap: 4, padding: 8, position: 'absolute', right: 15, zIndex: 2 },
   menuLine: { backgroundColor: '#C8C5C1', height: 1.2, width: 22 },
   topControlsRow: { alignItems: 'center', flexDirection: 'row', gap: 10, justifyContent: 'center', width: '100%', zIndex: 1 },
@@ -297,4 +431,52 @@ const styles = StyleSheet.create({
   detailValue: { color: '#E7E4E0', fontSize: 13, fontWeight: '600' },
   completeAction: { alignItems: 'center', borderColor: '#3A3A3A', borderRadius: 10, borderWidth: 1, marginTop: 18, paddingVertical: 12 },
   completeActionText: { color: '#DAD7D2', fontSize: 11, fontWeight: '800' },
+  tutorialOverlay: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.62)', flex: 1, justifyContent: 'center', padding: 18 },
+  tutorialCard: { backgroundColor: '#101010', borderColor: '#343434', borderRadius: 24, borderWidth: 1, maxHeight: '84%', maxWidth: 420, padding: 18, width: '100%' },
+  tutorialHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  tutorialHeaderLeft: { gap: 2 },
+  tutorialTitle: { color: '#F0EDE9', fontSize: 17, fontWeight: '800' },
+  tutorialCounter: { color: '#6A6A6A', fontSize: 10, fontWeight: '700', letterSpacing: 0.6 },
+  tutorialTabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  tutorialTab: { backgroundColor: '#151515', borderColor: '#242424', borderRadius: 999, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
+  tutorialTabActive: { backgroundColor: '#F0EEEA', borderColor: '#F0EEEA' },
+  tutorialTabText: { color: '#8A8A8A', fontSize: 10, fontWeight: '800' },
+  tutorialTabTextActive: { color: '#171717' },
+  tutorialBody: { minHeight: 248 },
+  tutorialSection: { gap: 8 },
+  tutorialSectionEyebrow: { color: '#6A6A6A', fontSize: 9, fontWeight: '800', letterSpacing: 0.8 },
+  tutorialSectionTitle: { color: '#F1EFEC', fontSize: 18, fontWeight: '800', letterSpacing: -0.2 },
+  tutorialSectionDesc: { color: '#9A9A9A', fontSize: 12, lineHeight: 17 },
+  tutorialVisual: { backgroundColor: '#151515', borderColor: '#2A2A2A', borderRadius: 12, borderWidth: 1, gap: 9, marginTop: 6, padding: 12 },
+  legendRow: { alignItems: 'center', flexDirection: 'row', gap: 9 },
+  legendSwatch: { borderRadius: 2, height: 9, width: 18 },
+  legendFlag: { borderColor: 'rgba(255,255,255,0.18)', borderRadius: 1, borderWidth: 0.6, height: 10, overflow: 'hidden', width: 14 },
+  miniFlagRow: { flex: 1, flexDirection: 'row' },
+  miniCell: { flex: 1 },
+  legendText: { color: '#9A9A9A', flex: 1, fontSize: 11, lineHeight: 14 },
+  legendBold: { color: '#EDEAE6', fontWeight: '700' },
+  healthRow: { alignItems: 'center', flexDirection: 'row', gap: 9 },
+  healthDotHealthy: { backgroundColor: '#EAE7E3', borderRadius: 4, height: 7, opacity: 0.9, width: 7 },
+  healthDotTired: { backgroundColor: '#EAE7E3', borderRadius: 4, height: 7, opacity: 0.7, width: 7 },
+  healthDotExhausted: { backgroundColor: '#EAE7E3', borderRadius: 4, height: 7, opacity: 0.48, width: 7 },
+  energyRow: { alignItems: 'center', flexDirection: 'row', gap: 9 },
+  energyDot: { borderRadius: 3, height: 7, width: 7 },
+  bulletRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 8 },
+  bulletDot: { backgroundColor: '#5A5A5A', borderRadius: 3, height: 5, marginTop: 5, width: 5 },
+  manageIcon: { alignItems: 'flex-start', backgroundColor: '#0A0A0A', borderColor: '#242424', borderRadius: 6, borderWidth: 1, gap: 3, height: 26, justifyContent: 'center', paddingHorizontal: 5, width: 26 },
+  manageIconPlus: { alignItems: 'center', backgroundColor: '#0A0A0A', borderColor: '#242424', borderRadius: 13, borderWidth: 1, height: 26, justifyContent: 'center', width: 26 },
+  plusHorizontalMini: { backgroundColor: '#DAD7D2', height: 1.2, position: 'absolute', width: 10 },
+  plusVerticalMini: { backgroundColor: '#DAD7D2', height: 10, position: 'absolute', width: 1.2 },
+  tutorialHint: { color: '#6E6E6E', fontSize: 10.5, fontStyle: 'italic', lineHeight: 14, marginTop: 2 },
+  tutorialNav: { alignItems: 'center', gap: 12, marginTop: 16 },
+  tutorialDots: { flexDirection: 'row', gap: 6 },
+  tutorialDot: { backgroundColor: '#2A2A2A', borderRadius: 3, height: 5, width: 5 },
+  tutorialDotActive: { backgroundColor: '#F0EEEA', width: 16 },
+  tutorialNavButtons: { flexDirection: 'row', gap: 10, width: '100%' },
+  tutorialBack: { alignItems: 'center', borderColor: '#2A2A2A', borderRadius: 10, borderWidth: 1, flex: 1, paddingVertical: 11 },
+  tutorialBackDisabled: { borderColor: '#1A1A1A', opacity: 0.45 },
+  tutorialBackText: { color: '#9A9A9A', fontSize: 12, fontWeight: '800' },
+  tutorialBackTextDisabled: { color: '#555' },
+  tutorialNext: { alignItems: 'center', backgroundColor: '#F0EEEA', borderRadius: 10, flex: 1.2, paddingVertical: 11 },
+  tutorialNextText: { color: '#171717', fontSize: 12, fontWeight: '900' },
 });
