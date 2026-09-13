@@ -66,24 +66,70 @@ The core loop is **See → Understand → Adjust → Recover**.
 
 ## 2.2 Ideation Boards
 
-**TODO before submission:** Embed the team's actual ideation board(s) here. The board should show the evolution, not only the final UI.
+The board shows the evolution, not only the final UI — from problem framing to the decision-support layer. Sequence follows the recommended structure.
 
-Recommended sequence:
+### 1 — Problem Tree: why invisible workload
 
-1. Problem tree — burnout factors and the decision to focus on invisible accumulated workload.
-2. V1 — commitments shown as deadline lines.
-3. Competitor/similarity realisation — plain timeline bars were not differentiated enough from conventional calendars.
-4. V2 — runners, deadline convergence and pressure zones: “workload as lived strain”.
-5. Prototype simplification — less clutter, category accents, hidden labels and one user-state runner.
-6. Decision layer — capacity-aware workload, pressure explanation, what-if rebalancing and recovery protection.
+<p align="center">
+  <img src="docs/problem-tree.png" alt="Problem tree: student burnout factors leading to focus on invisible accumulated workload" width="720" />
+</p>
 
-```md
-![Problem Tree](docs/ideation/problem-tree.png)
-*We narrowed the challenge to workload that stays invisible until it becomes overwhelming.*
+*We mapped burnout to four contributors — visible deadlines already tracked, invisible workload that accumulates unseen, poor sleep/routines, and social pressure. Existing apps handled visible deadlines best. We chose to focus on **invisible accumulated workload** — the stack that becomes obvious only when it is already overwhelming.*
 
-![Concept Evolution](docs/ideation/concept-evolution.png)
-*The concept evolved from a deadline visualiser into a workload forecasting and decision-support system.*
-```
+### 2 — V1: Commitments as Deadline Lines
+
+<p align="center">
+  <img src="docs/v1-UI.png" alt="V1 UI: workload shown as coloured deadline lines per commitment" width="280" />
+</p>
+
+*V1 rendered each commitment as a horizontal line from start to due date (Your Workload / Days to Doom / Today's Tasks / Upcoming Deadlines). It communicated **when** items existed, similar to a quest log, but treated every line equally. Duration was visible as line length; difficulty, convergence and lived strain were not.*
+
+### 3 — Competitor / Similarity Realisation
+
+<p align="center">
+  <img src="docs/comparison-realization.png" alt="Similarity comparison table: Notion Calendar vs Deadlines V1" width="720" />
+</p>
+
+*We audited V1 against Notion Calendar/Timeline. Both used a multi-day bar/line from start to due date, bar/line length for duration, no difficulty signal, and lines/bars that stack without emphasis. Communication was “when items exist”. Similarity was **High** — not differentiated enough from conventional calendars. This forced a pivot from “deadline visualiser” to “workload forecasting and decision support”.*
+
+Sources: Notion (n.d.-a). *Timeline view databases in Notion.* Notion Help Center; Notion (n.d.-b). *Calendar view databases.* Notion Help Center; Sparxno (2026, June 17). *Notion database views: Table, board, timeline, calendar, and more.*
+
+### 4 — V2: Workload as Lived Strain
+
+<p align="center">
+  <img src="docs/v2-UI.png" alt="V2 UI: vertical timeline with pressure zones, convergence dots and runner" width="280" />
+</p>
+
+*V2 verticalises time and introduces **pressure zones** (HIGH PRESSURE blocks), deadline **convergence dots** at the top of each commitment line, and the **runner** on the left gutter whose fatigue matches the workload band. The question shifts from “what is due?” to “when does combined strain become dangerous and why?”.*
+
+### 5 — Prototype Simplification: Less Clutter, One Runner
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/v2-UI.png" alt="V2 cluttered runner iteration" width="220" /><br/><sub>V2 — exploratory, multiple accents</sub></td>
+    <td align="center"><img src="image.png" alt="Simplified prototype: vertical timeline with pressure zones, WEEK view" width="220" /><br/><sub>Prototype — simplified</sub></td>
+  </tr>
+</table>
+
+*We removed multi-runner ambiguity, hid task labels until interaction, kept **category accents** as dot colour only, and kept **one runner** representing aggregate user strain. Pressure zones and the capacity pill (“STRAINED · 8”) carry visual weight instead of dashboard cards. Tap a HIGH PRESSURE region to drill into the contributing commitments (see Pressure Interaction in §3). The result is quieter at rest and explicit on demand.*
+
+### 6 — Decision Layer: Capacity-Aware, Explainable, Recovery-Protected
+
+<p align="center">
+  <img src="docs/decision-layer.png" alt="Decision layer flow: capacity-aware scoring, plain-language pressure explanation, what-if rebalancing, recovery protection, reduced burnout risk loop" width="720" />
+</p>
+
+*The loop closes as **See → Understand → Adjust → Recover**:* (1) *workload is scored against a **user-set daily capacity** (Running Low / Okay / Good — not a mood diary);* (2) *pressure is explained in plain language with the commitments that create it;* (3) *a **what-if rebalancing** is simulated before committing — e.g. moving a flexible commitment earlier, with BEFORE 8 OVERLOADED → AFTER 5 STRAINED preview;* (4) *a **recovery window** after the nearest pressure period is identified and can be protected from refilling, guarding the post-peak dip. The loop reduces burnout risk.*
+
+<table>
+  <tr>
+    <td align="center"><img src="image-3.png" alt="Capacity check-in: Running low / Okay / Good" width="220" /><br/><sub>Daily capacity check-in</sub></td>
+    <td align="center"><img src="image-1.png" alt="Pressure drill-down showing 3 converging commitments and move-earlier suggestion" width="220" /><br/><sub>Pressure drill-down + suggested move</sub></td>
+    <td align="center"><img src="image-2.png" alt="Decision sheet: Running low capacity, best adjustment and protected recovery window" width="220" /><br/><sub>What-if preview + recovery protection</sub></td>
+  </tr>
+</table>
+
+*Concept evolution summary: the product moved from a **deadline visualiser** (V1 lines, quest-log feel) to a **workload forecasting and decision-support system** (V2 + decision layer) that makes accumulated strain visible early enough to act, and protects recovery instead of treating empty time as free capacity.*
 
 ## 2.3 Mentor Consultation
 
