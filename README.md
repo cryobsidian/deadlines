@@ -10,7 +10,7 @@
 **Problem Statement:** Lifestyle Track — Beating the Burnout: Stress & Workload Manager  
 **Video Presentation:** [Unlisted YouTube Link — add before submission]  
 **Presentation Slides:** [View Canva presentation](https://www.canva.com/design/DAHU9VZ4Qj4/w_xteARCwS-PP3a84dTFcg/edit)  
-**UI Prototype:** [Add public prototype link before submission](#3-design--prototype)
+**UI Prototype:** [prototype screenshots](#3-design--prototype)
 
 ---
 
