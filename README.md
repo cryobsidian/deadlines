@@ -1,5 +1,5 @@
 # Deadlines by Team Code Happens
-
+![alt text](image-4.png)
 > **See the pressure coming. Adjust before it hits.**
 
 **Team:** Chloe Chok, Daniel Yong, Evan Chong
@@ -7,7 +7,7 @@
 **Video Presentation:** [Unlisted YouTube Link]  
 **Presentation Slides:** https://www.canva.com/design/DAHU9VZ4Qj4/w_xteARCwS-PP3a84dTFcg/edit
 **UI Prototype:** 
-
+![alt text](image.png)![alt text](image-1.png)![alt text](image-2.png)![alt text](image-3.png)
 ---
 
 # 1. Project Overview
