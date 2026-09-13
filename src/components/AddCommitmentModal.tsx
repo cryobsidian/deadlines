@@ -11,7 +11,7 @@ const difficultyOptions = [1, 2, 3].map((value) => ({ label: value === 1 ? 'Easy
 const flexibilityOptions = ['fixed', 'flexible', 'droppable'].map((value) => ({ label: titleCase(value), value: value as CommitmentFlexibility }));
 
 type Picker = 'category' | 'priority' | 'difficulty' | 'flexibility' | null;
-type DuePicker = 'date' | 'time' | null;
+type DateTimePickerMode = 'date' | 'time' | null;
 
 type Props = {
   visible: boolean;
@@ -25,6 +25,12 @@ function defaultDue(now: Date) {
   due.setDate(due.getDate() + 3);
   due.setHours(18, 0, 0, 0);
   return due;
+}
+
+function defaultStart(now: Date) {
+  const start = new Date(now);
+  start.setSeconds(0, 0);
+  return start;
 }
 
 function formatDate(date: Date) {
@@ -41,10 +47,12 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
   const [priority, setPriority] = useState<CommitmentPriority>('medium');
   const [difficulty, setDifficulty] = useState<CommitmentDifficulty>(2);
   const [flexibility, setFlexibility] = useState<CommitmentFlexibility>('flexible');
+  const [startsFrom, setStartsFrom] = useState<Date>(() => defaultStart(now));
   const [due, setDue] = useState<Date>(() => defaultDue(now));
   const [advanced, setAdvanced] = useState(false);
   const [picker, setPicker] = useState<Picker>(null);
-  const [duePicker, setDuePicker] = useState<DuePicker>(null);
+  const [duePicker, setDuePicker] = useState<DateTimePickerMode>(null);
+  const [startPicker, setStartPicker] = useState<DateTimePickerMode>(null);
   const [error, setError] = useState<string | null>(null);
 
   function reset() {
@@ -53,10 +61,12 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
     setPriority('medium');
     setDifficulty(2);
     setFlexibility('flexible');
+    setStartsFrom(defaultStart(now));
     setDue(defaultDue(now));
     setAdvanced(false);
     setPicker(null);
     setDuePicker(null);
+    setStartPicker(null);
     setError(null);
   }
 
@@ -69,11 +79,12 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
     const trimmed = title.trim();
     if (!trimmed) return setError('Title is required');
     if (due.getTime() <= now.getTime()) return setError('Due date must be after now');
+    if (startsFrom.getTime() >= due.getTime()) return setError('Starts from must be before due');
 
     onAdd({
       id: `commitment-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       title: trimmed,
-      startAt: now.toISOString(),
+      startAt: startsFrom.toISOString(),
       dueAt: due.toISOString(),
       category,
       priority,
@@ -97,6 +108,20 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
     setError(null);
   }
 
+  function updateStartsFromDate(next: Date) {
+    const merged = new Date(startsFrom);
+    merged.setFullYear(next.getFullYear(), next.getMonth(), next.getDate());
+    setStartsFrom(merged);
+    setError(null);
+  }
+
+  function updateStartsFromTime(next: Date) {
+    const merged = new Date(startsFrom);
+    merged.setHours(next.getHours(), next.getMinutes(), 0, 0);
+    setStartsFrom(merged);
+    setError(null);
+  }
+
   return (
     <>
       <Modal animationType="fade" onRequestClose={close} statusBarTranslucent transparent visible={visible}>
@@ -112,13 +137,57 @@ export function AddCommitmentModal({ visible, now, onClose, onAdd }: Props) {
               <Text style={styles.label}>Title</Text>
               <TextInput autoFocus onChangeText={(value) => { setTitle(value); setError(null); }} placeholder="e.g. Final essay" placeholderTextColor="#6E6E6E" style={styles.input} value={title} />
 
+              <Text style={styles.label}>Starts from</Text>
+              <View style={styles.row}>
+                <Pressable onPress={() => { setStartPicker('date'); setDuePicker(null); }} style={[styles.pickerField, styles.field]}>
+                  <Text style={styles.pickerValue}>{formatDate(startsFrom)}</Text>
+                  <Text style={styles.hint}>date</Text>
+                </Pressable>
+                <Pressable onPress={() => { setStartPicker('time'); setDuePicker(null); }} style={[styles.pickerField, styles.field]}>
+                  <Text style={styles.pickerValue}>{formatTime(startsFrom)}</Text>
+                  <Text style={styles.hint}>time</Text>
+                </Pressable>
+              </View>
+
+              {Platform.OS !== 'web' && startPicker ? (
+                <DateTimePicker
+                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                  mode={startPicker}
+                  onChange={(_, selectedDate) => {
+                    if (Platform.OS === 'android') setStartPicker(null);
+                    if (!selectedDate) return;
+                    if (startPicker === 'date') updateStartsFromDate(selectedDate);
+                    else updateStartsFromTime(selectedDate);
+                  }}
+                  value={startsFrom}
+                />
+              ) : null}
+
+              {Platform.OS === 'web' && startPicker ? (
+                <View style={styles.webFallback}>
+                  <Text style={styles.webFallbackText}>{startPicker === 'date' ? 'Adjust the start date' : 'Adjust the start time'}</Text>
+                  {startPicker === 'date' ? (
+                    <View style={styles.quickRow}>
+                      <QuickButton label="−1 day" onPress={() => setStartsFrom((current) => new Date(current.getTime() - 86400000))} />
+                      <QuickButton label="+1 day" onPress={() => setStartsFrom((current) => new Date(current.getTime() + 86400000))} />
+                    </View>
+                  ) : (
+                    <View style={styles.quickRow}>
+                      <QuickButton label="−1 hr" onPress={() => setStartsFrom((current) => new Date(current.getTime() - 3600000))} />
+                      <QuickButton label="+1 hr" onPress={() => setStartsFrom((current) => new Date(current.getTime() + 3600000))} />
+                    </View>
+                  )}
+                  <Pressable onPress={() => setStartPicker(null)} style={styles.webDone}><Text style={styles.webDoneText}>Done</Text></Pressable>
+                </View>
+              ) : null}
+
               <Text style={styles.label}>Due</Text>
               <View style={styles.row}>
-                <Pressable onPress={() => setDuePicker('date')} style={[styles.pickerField, styles.field]}>
+                <Pressable onPress={() => { setDuePicker('date'); setStartPicker(null); }} style={[styles.pickerField, styles.field]}>
                   <Text style={styles.pickerValue}>{formatDate(due)}</Text>
                   <Text style={styles.hint}>date</Text>
                 </Pressable>
-                <Pressable onPress={() => setDuePicker('time')} style={[styles.pickerField, styles.field]}>
+                <Pressable onPress={() => { setDuePicker('time'); setStartPicker(null); }} style={[styles.pickerField, styles.field]}>
                   <Text style={styles.pickerValue}>{formatTime(due)}</Text>
                   <Text style={styles.hint}>time</Text>
                 </Pressable>

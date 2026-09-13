@@ -209,6 +209,7 @@ export default function HomeScreen() {
                 <Detail label="Priority" value={titleCase(selected.priority ?? 'medium')} />
                 <Detail label="Difficulty" value={selected.difficulty === 1 ? 'Easy' : selected.difficulty === 2 ? 'Medium' : 'Hard'} />
                 <Detail label="Flexibility" value={titleCase(selected.flexibility ?? 'flexible')} />
+                <Detail label="Starts from" value={new Date(selected.startAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} />
                 <Detail label="Due" value={new Date(selected.dueAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} />
               </View>
               <Pressable onPress={() => completeCommitment(selected.id)} style={styles.completeAction}>
