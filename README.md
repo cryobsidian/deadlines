@@ -50,7 +50,7 @@ The core loop is **See → Understand → Adjust → Recover**.
 ## 2.1 Ideas We Considered
 
 | Idea | Why it was dropped / kept |
-|---|---|
+| --- | --- |
 | **Workload pressure timeline (Chosen)** | **Kept.** Makes workload convergence visible across time and became the core interaction. |
 | **Pressure forecasting (Chosen)** | **Kept.** Shows *when* workload becomes difficult rather than only counting tasks. |
 | **What-if rebalancing (Chosen)** | **Kept.** Turns the product from a passive visualiser into a decision-support tool. |
@@ -71,7 +71,7 @@ The board shows the evolution, not only the final UI — from problem framing to
 ### 1 — Problem Tree: why invisible workload
 
 <p align="center">
-  <img src="docs/problem-tree.png" alt="Problem tree: student burnout factors leading to focus on invisible accumulated workload" width="720" />
+  <img src="docs/ideation/problem-tree.png" alt="Problem tree: student burnout factors leading to focus on invisible accumulated workload" width="720" />
 </p>
 
 *We mapped burnout to four contributors — visible deadlines already tracked, invisible workload that accumulates unseen, poor sleep/routines, and social pressure. Existing apps handled visible deadlines best. We chose to focus on **invisible accumulated workload** — the stack that becomes obvious only when it is already overwhelming.*
@@ -79,7 +79,7 @@ The board shows the evolution, not only the final UI — from problem framing to
 ### 2 — V1: Commitments as Deadline Lines
 
 <p align="center">
-  <img src="docs/v1-UI.png" alt="V1 UI: workload shown as coloured deadline lines per commitment" width="280" />
+  <img src="docs/ideation/v1-UI.png" alt="V1 UI: workload shown as coloured deadline lines per commitment" width="280" />
 </p>
 
 *V1 rendered each commitment as a horizontal line from start to due date (Your Workload / Days to Doom / Today's Tasks / Upcoming Deadlines). It communicated **when** items existed, similar to a quest log, but treated every line equally. Duration was visible as line length; difficulty, convergence and lived strain were not.*
@@ -87,7 +87,7 @@ The board shows the evolution, not only the final UI — from problem framing to
 ### 3 — Competitor / Similarity Realisation
 
 <p align="center">
-  <img src="docs/comparison-realization.png" alt="Similarity comparison table: Notion Calendar vs Deadlines V1" width="720" />
+  <img src="docs/ideation/comparison-realization.png" alt="Similarity comparison table: Notion Calendar vs Deadlines V1" width="720" />
 </p>
 
 *We audited V1 against Notion Calendar/Timeline. Both used a multi-day bar/line from start to due date, bar/line length for duration, no difficulty signal, and lines/bars that stack without emphasis. Communication was “when items exist”. Similarity was **High** — not differentiated enough from conventional calendars. This forced a pivot from “deadline visualiser” to “workload forecasting and decision support”.*
@@ -97,7 +97,7 @@ Sources: Notion (n.d.-a). *Timeline view databases in Notion.* Notion Help Cente
 ### 4 — V2: Workload as Lived Strain
 
 <p align="center">
-  <img src="docs/v2-UI.png" alt="V2 UI: vertical timeline with pressure zones, convergence dots and runner" width="280" />
+  <img src="docs/ideation/v2-UI.png" alt="V2 UI: vertical timeline with pressure zones, convergence dots and runner" width="280" />
 </p>
 
 *V2 verticalises time and introduces **pressure zones** (HIGH PRESSURE blocks), deadline **convergence dots** at the top of each commitment line, and the **runner** on the left gutter whose fatigue matches the workload band. The question shifts from “what is due?” to “when does combined strain become dangerous and why?”.*
@@ -106,7 +106,7 @@ Sources: Notion (n.d.-a). *Timeline view databases in Notion.* Notion Help Cente
 
 <table>
   <tr>
-    <td align="center"><img src="docs/v2-UI.png" alt="V2 cluttered runner iteration" width="220" /><br/><sub>V2 — exploratory, multiple accents</sub></td>
+    <td align="center"><img src="docs/ideation/v2-UI.png" alt="V2 cluttered runner iteration" width="220" /><br/><sub>V2 — exploratory, multiple accents</sub></td>
     <td align="center"><img src="image.png" alt="Simplified prototype: vertical timeline with pressure zones, WEEK view" width="220" /><br/><sub>Prototype — simplified</sub></td>
   </tr>
 </table>
@@ -116,7 +116,7 @@ Sources: Notion (n.d.-a). *Timeline view databases in Notion.* Notion Help Cente
 ### 6 — Decision Layer: Capacity-Aware, Explainable, Recovery-Protected
 
 <p align="center">
-  <img src="docs/decision-layer.png" alt="Decision layer flow: capacity-aware scoring, plain-language pressure explanation, what-if rebalancing, recovery protection, reduced burnout risk loop" width="720" />
+  <img src="docs/ideation/decision-layer.png" alt="Decision layer flow: capacity-aware scoring, plain-language pressure explanation, what-if rebalancing, recovery protection, reduced burnout risk loop" width="720" />
 </p>
 
 *The loop closes as **See → Understand → Adjust → Recover**:* (1) *workload is scored against a **user-set daily capacity** (Running Low / Okay / Good — not a mood diary);* (2) *pressure is explained in plain language with the commitments that create it;* (3) *a **what-if rebalancing** is simulated before committing — e.g. moving a flexible commitment earlier, with BEFORE 8 OVERLOADED → AFTER 5 STRAINED preview;* (4) *a **recovery window** after the nearest pressure period is identified and can be protected from refilling, guarding the post-peak dip. The loop reduces burnout risk.*
@@ -176,7 +176,7 @@ The prototype deliberately keeps the timeline as the primary surface instead of 
 Deadlines is not primarily a task manager, calendar or stress journal. Its central object is **future workload pressure**.
 
 | Conventional approach | Deadlines |
-|---|---|
+| --- | --- |
 | Shows individual tasks/events | Shows how commitments combine into workload |
 | Deadline reminder | Forecasts pressure before commitments converge |
 | Static priority | Uses priority, difficulty, flexibility and daily capacity |
@@ -203,7 +203,7 @@ Deadlines is not primarily a task manager, calendar or stress journal. Its centr
 ## Tech Stack
 
 | Layer | Technology | Why / constraints |
-|---|---|---|
+| --- | --- | --- |
 | Mobile client | **React Native + Expo 57 + TypeScript** | One mobile-first codebase for iOS and Android, with access to native components and Expo tooling. |
 | Workload logic | **Deterministic TypeScript engine** | Explainable, testable workload scoring without depending on opaque AI output. |
 | Backend/API | **FastAPI (Python), planned service layer** | Suitable for later automation, integrations and advanced processing. Core prototype calculations remain local. |
@@ -216,7 +216,7 @@ Deadlines is not primarily a task manager, calendar or stress journal. Its centr
 Each active commitment contributes a difficulty weight:
 
 | Difficulty | Weight |
-|---|---:|
+| --- | ---: |
 | Easy | 1 |
 | Medium | 2 |
 | Hard | 3 |
